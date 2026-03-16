@@ -398,7 +398,21 @@ function App(){
 
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
-  function clearAllLW(){if(window.confirm("Clear all results?")){setLiveWinners({});}}
+  function clearAllLW(){
+    if(window.confirm("Clear all results including First Four?")){
+      setLiveWinners({});
+      setFfWinners({});
+      // Reset all First Four bracket slots back to placeholders
+      setTeams(function(prev){
+        return prev.map(function(t){
+          var ff=FIRST_FOUR.filter(function(f){return f.slotId===t.id;})[0];
+          if(!ff)return t;
+          var orig=DEFAULT_TEAMS.filter(function(d){return d.id===t.id;})[0];
+          return Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
+        });
+      });
+    }
+  }
 
   function pickFFWinner(ff,side){
     var winner=side==="A"?ff.teamA:ff.teamB;
