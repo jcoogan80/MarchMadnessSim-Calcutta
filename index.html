@@ -598,7 +598,7 @@ function App(){
     var impliedML="--",impliedSpread="--";
     if(simWp>0&&simWp<1){
       impliedML=simWp>=0.5?"-"+Math.round((simWp/(1-simWp))*100):"+"+Math.round(((1-simWp)/simWp)*100);
-      var sp=-(-Math.log((1/simWp)-1)/0.163);
+      var sp=Math.log((1/simWp)-1)/0.163;
       impliedSpread=(sp>0?"+":"")+sp.toFixed(1);
     }
     var cells=[
