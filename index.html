@@ -121,6 +121,23 @@ function runSim(teams,N,blendW,liveWinners){
   return probs;
 }
 
+// Jason's personal adjustments based on madness sheet analysis
+var JASON_ADJ={
+  "Duke":2.0,"Michigan":1.5,"Houston":1.5,"Illinois":1.0,"Iowa State":1.0,
+  "St Marys":1.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
+  "Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"SMU":-1.5,
+  "Missouri":-1.0,"UCF":-1.0,"Nebraska":-1.0,"St. Johns":-1.0,
+  "Utah St":-1.0,"Vanderbilt":-1.0,"Louisville":-1.0,
+  "Iowa":-0.5,"VCU":-0.5,"North Carolina":-0.5
+};
+
+function applyJasonAdj(teams){
+  return teams.map(function(t){
+    var a=JASON_ADJ[t.name];
+    return a!==undefined?Object.assign({},t,{adj:a}):t;
+  });
+}
+
 var DEFAULT_TEAMS=[
 // ── SOUTH ──────────────────────────────────────────────────────────
 {id:1, name:"Florida",      seed:1,  region:"South", kenpom:35.32, torvik:0.9752},
@@ -295,7 +312,13 @@ function App(){
   useEffect(function(){
     var d=loadProfile(active);
     if(d){
-      if(d.teams)setTeams(d.teams);
+      var loadedTeams=d.teams||DEFAULT_TEAMS;
+      // For Jason: if no adj values set yet, apply hardcoded adjustments
+      if(active==="Jason"){
+        var hasAdj=loadedTeams.some(function(t){return t.adj&&t.adj!==0;});
+        if(!hasAdj)loadedTeams=applyJasonAdj(loadedTeams);
+      }
+      setTeams(loadedTeams);
       if(d.simResults)setSimRes(d.simResults);
       if(d.numSims)setNumSims(d.numSims);
       if(d.blendW!=null)setBlendW(d.blendW);
@@ -304,6 +327,9 @@ function App(){
       if(d.calcPrices)setCalcPrices(d.calcPrices);
       if(d.calcPot)setCalcPot(d.calcPot);
       if(d.tab)setTab(d.tab);
+    } else if(active==="Jason"){
+      // Fresh Jason profile — apply adjustments to defaults
+      setTeams(applyJasonAdj(DEFAULT_TEAMS));
     }
     setHydrated(true);
   },[]);
@@ -322,12 +348,19 @@ function App(){
     setActive(name);lsSet(activeKey(),name);
     var d=loadProfile(name);
     if(d){
-      setTeams(d.teams||DEFAULT_TEAMS);setSimRes(d.simResults||null);
+      var loadedTeams=d.teams||DEFAULT_TEAMS;
+      if(name==="Jason"){
+        var hasAdj=loadedTeams.some(function(t){return t.adj&&t.adj!==0;});
+        if(!hasAdj)loadedTeams=applyJasonAdj(loadedTeams);
+      }
+      setTeams(loadedTeams);
+      setSimRes(d.simResults||null);
       setNumSims(d.numSims||5000);setBlendW(d.blendW!=null?d.blendW:0.5);
       setLines(d.lines||{});setLiveWinners(d.liveWinners||{});
       setCalcPrices(d.calcPrices||{});setCalcPot(d.calcPot||1000);setTab(d.tab||"setup");
     } else {
-      setTeams(DEFAULT_TEAMS);setSimRes(null);setNumSims(5000);setBlendW(0.5);
+      var fresh=name==="Jason"?applyJasonAdj(DEFAULT_TEAMS):DEFAULT_TEAMS;
+      setTeams(fresh);setSimRes(null);setNumSims(5000);setBlendW(0.5);
       setLines({});setLiveWinners({});setCalcPrices({});setCalcPot(1000);setTab("setup");
     }
     setEditing(null);
