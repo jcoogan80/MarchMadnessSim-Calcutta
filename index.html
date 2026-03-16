@@ -38,8 +38,8 @@ function sp2wp(s){return 1/(1+Math.exp(-0.163*(-s)));}
 
 var REGIONS=["South","East","West","Midwest"];
 var R64_PAIRS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
-var R32_PAIRS=[[0,7],[1,6],[2,5],[3,4]];
-var S16_PAIRS=[[0,3],[1,2]];
+var R32_PAIRS=[[0,1],[2,3],[4,5],[6,7]];
+var S16_PAIRS=[[0,1],[2,3]];
 var ROUNDS=["R64","R32","S16","E8","F4","NCG","Champion"];
 var RPAY={R64:0.0094,R32:0.015,S16:0.020,E8:0.030,F4:0.045,NCG:0.070,Champion:0};
 
