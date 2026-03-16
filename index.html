@@ -399,19 +399,18 @@ function App(){
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
   function clearAllLW(){
-    if(window.confirm("Clear all results including First Four?")){
-      setLiveWinners({});
-      setFfWinners({});
-      // Reset all First Four bracket slots back to placeholders
-      setTeams(function(prev){
-        return prev.map(function(t){
-          var ff=FIRST_FOUR.filter(function(f){return f.slotId===t.id;})[0];
-          if(!ff)return t;
-          var orig=DEFAULT_TEAMS.filter(function(d){return d.id===t.id;})[0];
-          return Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
-        });
+    setLiveWinners({});
+    setFfWinners({});
+    var slotIds={50:true,42:true,2:true,58:true};
+    setTeams(function(prev){
+      return prev.map(function(t){
+        if(!slotIds[t.id])return t;
+        var orig=null;
+        for(var i=0;i<DEFAULT_TEAMS.length;i++){if(DEFAULT_TEAMS[i].id===t.id){orig=DEFAULT_TEAMS[i];break;}}
+        if(!orig)return t;
+        return Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
       });
-    }
+    });
   }
 
   function pickFFWinner(ff,side){
@@ -610,9 +609,10 @@ function App(){
       ?ce("input",{type:"number",placeholder:"-14.5",value:key&&lines[key]||"",onChange:function(ev){var v=ev.target.value,k=key;setLines(function(prev){var n=Object.assign({},prev);n[k]=v;return n;});},style:iSt({width:"70px"})})
       :ce("span",{style:{color:"#475569",fontSize:"10px"}},sm?"dog vs #"+sm.opp.seed:"--");
     var impliedML="--",impliedSpread="--";
-    if(simWp>0&&simWp<1){
+    var clampedWp=Math.min(0.98,Math.max(0.02,simWp));
+    if(sm&&simWp>0&&simWp<1){
       impliedML=simWp>=0.5?"-"+Math.round((simWp/(1-simWp))*100):"+"+Math.round(((1-simWp)/simWp)*100);
-      var sp=Math.log((1/simWp)-1)/0.163;
+      var sp=Math.log((1/clampedWp)-1)/0.163;
       impliedSpread=(sp>0?"+":"")+sp.toFixed(1);
     }
     var cells=[
