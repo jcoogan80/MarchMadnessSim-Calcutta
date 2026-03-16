@@ -350,8 +350,8 @@ function App(){
     if(d){
       var loadedTeams=d.teams||DEFAULT_TEAMS;
       if(name==="Jason"){
-        var hasAdj=loadedTeams.some(function(t){return t.adj&&t.adj!==0;});
-        if(!hasAdj)loadedTeams=applyJasonAdj(loadedTeams);
+        // Always re-apply hardcoded adj for Jason
+        loadedTeams=applyJasonAdj(loadedTeams);
       }
       setTeams(loadedTeams);
       setSimRes(d.simResults||null);
