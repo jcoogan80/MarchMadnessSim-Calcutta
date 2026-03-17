@@ -520,20 +520,19 @@ function App(){
     setCmpRows(rows);
     setCmpDone(true);
 
-    // Build blendMap: for each matched row compute (avgEV / totalPot) and avgEV
-    // totalPot = sum of all matched avgEVs (re-normalised so pcts sum to 100%)
+    // Build blendMap: Blend % = avgEV / calcPot
+    // Both sources should be normalised to the same pot size, so dividing
+    // the simple average by calcPot gives the correct blend percentage directly.
     var matched=rows.filter(function(r){return r.evA!==null&&r.evB!==null;});
-    var totalAvg=matched.reduce(function(s,r){return s+(r.evA+r.evB)/2;},0);
+    var pot=calcPot||10000;
     var newMap={};
-    if(totalAvg>0){
-      matched.forEach(function(r){
-        var avg=(r.evA+r.evB)/2;
-        newMap[r.name]={
-          blendPct: avg/totalAvg,          // fraction of total pot
-          blendAvgEV: avg                  // raw avg EV before rescaling
-        };
-      });
-    }
+    matched.forEach(function(r){
+      var avg=(r.evA+r.evB)/2;
+      newMap[r.name]={
+        blendPct: avg/pot,    // avgEV / pot  e.g. 7275/10000 = 0.7275 = 7.275%
+        blendAvgEV: avg
+      };
+    });
     setBlendMap(newMap);
   }
 
