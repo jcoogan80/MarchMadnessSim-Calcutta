@@ -113,12 +113,15 @@ function runSim(teams,N,blendW,liveWinners){
       if(!a||!b){f4w.push(null);continue;}
       var gk="F4_"+pi;
       var wid=playGame(a.id,b.id,gk,rat);
-      wins[wid].F4++;f4w.push(byId[wid]);
+      wins[a.id].F4++;wins[b.id].F4++;
+      f4w.push(byId[wid]);
     }
     var a=f4w[0],b=f4w[1];
     if(!a||!b)continue;
     var wid=playGame(a.id,b.id,"NCG_0",rat);
-    wins[wid].NCG++;wins[wid].Champion++;
+    var lid=wid===a.id?b.id:a.id;
+    wins[wid].NCG++;wins[lid].NCG++;
+    wins[wid].Champion++;
   }
   var probs={};
   for(var i=0;i<teams.length;i++){
@@ -128,7 +131,8 @@ function runSim(teams,N,blendW,liveWinners){
   return probs;
 }
 
-var JASON_ADJ={
+// Sheet adjustments (Jason's manual inputs from the sheet)
+var JASON_SHEET_ADJ={
   "Duke":2.0,"Michigan":1.5,"Houston":1.5,"Illinois":1.0,"Iowa State":1.0,
   "St Marys":1.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
   "Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,
@@ -136,11 +140,42 @@ var JASON_ADJ={
   "Utah St":-1.0,"Vanderbilt":-1.0,"Louisville":-1.0,
   "Iowa":-0.5,"VCU":-0.5,"North Carolina":-0.5
 };
+// Claude adjustments — blend of madness sheet analysis + bracket guide data
+var CLAUDE_ADJ={
+  "Duke":0.5,           // guide -1.5 overvaluation offsets madness sheet +2.0
+  "Michigan":1.5,       // madness sheet
+  "Houston":2.0,        // madness sheet +1.5 + guide home court Sweet 16
+  "Illinois":2.5,       // madness sheet +1.0 + guide massive undervaluation
+  "Iowa State":1.0,     // madness sheet
+  "St Marys":1.0,       // madness sheet
+  "St. Johns":2.0,      // guide underseeded, value at every round
+  "Virginia":0.5,       // madness sheet
+  "Tennessee":0.5,      // madness sheet
+  "Gonzaga":0.5,        // madness sheet (Huff injury tempers this)
+  "Vanderbilt":0.5,     // guide underseeded, net of madness sheet -1.0 trending down
+  "UCLA":1.0,           // guide dangerous 7 seed, best recent form
+  "Louisville":1.0,     // guide undervalued at every round
+  "Missouri":0.5,       // guide coin flip, public overrating Miami
+  "VCU":0.5,            // guide 43% win prob vs UNC, only picked 28%
+  "Georgia":-2.0,       // madness sheet red flag DE
+  "TCU":-1.5,           // madness sheet red flag OE
+  "Santa Clara":-1.5,   // madness sheet red flag DE trending down
+  "MiamiOH/SMU":-1.5,  // madness sheet red flag
+  "UCF":-1.0,           // madness sheet red flag DE
+  "Nebraska":-1.0,      // madness sheet 0-8 R1 record
+  "North Carolina":-1.5,// guide grades as 8/9 seed + madness sheet
+  "Iowa":-0.5,          // madness sheet trending down
+  "Kansas":-0.5,        // guide public overrating vs St Johns
+  "Villanova":-0.5,     // guide public overrating vs Utah State
+  "Utah St":-0.5        // madness sheet -1.0, guide slight value +0.5 = net -0.5
+};
 
 function applyJasonAdj(teams){
   return teams.map(function(t){
-    var a=JASON_ADJ[t.name];
-    return a!==undefined?Object.assign({},t,{adj:a}):t;
+    var sheet=JASON_SHEET_ADJ[t.name]||0;
+    var claude=CLAUDE_ADJ[t.name]||0;
+    var blended=(sheet+claude)/2;
+    return Object.assign({},t,{adjSheet:sheet,adjClaude:claude,adj:blended});
   });
 }
 
@@ -436,7 +471,8 @@ function App(){
       var u=Object.assign({},t);
       if(field==="kenpom")u.kenpom=parseFloat(val)||0;
       else if(field==="torvik")u.torvik=Math.min(0.999,Math.max(0,parseFloat(val)||0));
-      else if(field==="adj")u.adj=parseFloat(val)||0;
+      else if(field==="adjSheet"){u.adjSheet=parseFloat(val)||0;u.adj=(u.adjSheet+(u.adjClaude||0))/2;}
+      else if(field==="adjClaude"){u.adjClaude=parseFloat(val)||0;u.adj=((u.adjSheet||0)+u.adjClaude)/2;}
       else if(field==="seed")u.seed=parseInt(val)||t.seed;
       else u[field]=val;
       return u;
@@ -587,15 +623,21 @@ function App(){
   }
 
   var setupRows=sortedTeams.map(function(team){
-    var adj=team.adj||0,bl=blendR(team,blendW),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
+    var adjS=team.adjSheet||0,adjC=team.adjClaude||0,adj=team.adj||0;
+    var bl=blendR(team,blendW),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
     return ce("tr",{key:team.id,onClick:function(){setEditing(isEdit?null:team.id);},style:{cursor:"pointer",background:isEdit?"#1e3a5f":"transparent"}},
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},team.region)),
       TD(isEdit?ce("input",{type:"number",min:"1",max:"16",value:team.seed,onChange:function(ev){updTeam(team.id,"seed",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"45px",border:"1px solid #f59e0b"})}):badge(team.seed)),
       TD(isEdit?ce("input",{value:team.name,onChange:function(ev){updTeam(team.id,"name",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"120px",textAlign:"left"})}):ce("span",{style:{fontWeight:600}},team.name)),
       TD(isEdit?ce("input",{type:"number",step:"0.1",value:team.kenpom,onChange:function(ev){updTeam(team.id,"kenpom",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"65px",border:"1px solid #60a5fa"})}):ce("span",{style:{color:"#60a5fa",fontWeight:600}},(team.kenpom>0?"+":"")+team.kenpom.toFixed(1))),
       TD(isEdit?ce("input",{type:"number",step:"0.001",min:"0",max:"1",value:team.torvik,onChange:function(ev){updTeam(team.id,"torvik",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"65px",border:"1px solid #a78bfa"})}):ce("span",{style:{color:"#a78bfa",fontWeight:600}},team.torvik.toFixed(3)),{borderLeft:"1px solid #1e293b"}),
-      TD(ce("input",{type:"number",step:"0.5",value:adj===0?"":adj,placeholder:"0",onChange:function(ev){updTeam(team.id,"adj",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"52px",border:"1px solid "+(adj>0?"#4ade80":adj<0?"#f87171":"#334155"),color:adj>0?"#4ade80":adj<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #1e293b"}),
-      TD([ce("span",{key:"v",style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:700}},(bl>0?"+":"")+bl.toFixed(1)),adj!==0?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:adj>0?"#4ade80":"#f87171",fontWeight:700}},(adj>0?"↑":"↓")+Math.abs(adj)):dis>4?ce("span",{key:"s",style:{marginLeft:"5px",fontSize:"9px",color:"#fb923c"}},"split"):null],{borderLeft:"1px solid #1e293b"}),
+      TD(ce("input",{type:"number",step:"0.5",value:adjS===0?"":adjS,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjSheet",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"52px",border:"1px solid "+(adjS>0?"#f59e0b":adjS<0?"#f87171":"#334155"),color:adjS>0?"#f59e0b":adjS<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #1e293b"}),
+      TD(ce("input",{type:"number",step:"0.5",value:adjC===0?"":adjC,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjClaude",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"52px",border:"1px solid "+(adjC>0?"#818cf8":adjC<0?"#f87171":"#334155"),color:adjC>0?"#818cf8":adjC<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #334155"}),
+      TD([
+        ce("span",{key:"v",style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:700}},(bl>0?"+":"")+bl.toFixed(1)),
+        adj!==0?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:adj>0?"#4ade80":"#f87171",fontWeight:700}},(adj>0?"↑":"↓")+Math.abs(adj).toFixed(1)):
+        dis>4?ce("span",{key:"s",style:{marginLeft:"5px",fontSize:"9px",color:"#fb923c"}},"split"):null
+      ],{borderLeft:"1px solid #1e293b"}),
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},isEdit?"done":"edit"))
     );
   });
@@ -740,7 +782,7 @@ function App(){
       ),
       ce("div",{style:{overflowX:"auto"}},
         ce("table",{},
-          ce("thead",{},ce("tr",{},TH("Region"),TH("Seed"),TH("Team"),TH("KenPom",{color:"#60a5fa"}),TH("Barthag",{color:"#a78bfa"}),TH("Adj",{borderLeft:"1px solid #334155",color:"#fb923c"}),TH("Blended",{borderLeft:"1px solid #1e293b"}),TH(""))),
+          ce("thead",{},ce("tr",{},TH("Region"),TH("Seed"),TH("Team"),TH("KenPom",{color:"#60a5fa"}),TH("Barthag",{color:"#a78bfa"}),TH("Sheet",{borderLeft:"1px solid #334155",color:"#f59e0b"}),TH("PG",{borderLeft:"1px solid #334155",color:"#818cf8"}),TH("Blended",{borderLeft:"1px solid #1e293b"}),TH(""))),
           ce("tbody",{},setupRows)))
     ):null,
 
