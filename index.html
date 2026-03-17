@@ -39,8 +39,8 @@ var REGIONS=["South","East","West","Midwest"];
 var R64_PAIRS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
 var R32_PAIRS=[[0,1],[2,3],[4,5],[6,7]];
 var S16_PAIRS=[[0,1],[2,3]];
-var ROUNDS=["R64","R32","S16","E8","F4","NCG","Champion"];
-var RPAY={R64:0.0094,R32:0.015,S16:0.020,E8:0.030,F4:0.045,NCG:0.070,Champion:0};
+var ROUNDS=["R64","R32","S16","E8","F4","Champion"];
+var RPAY={R64:0.0094,R32:0.015,S16:0.020,E8:0.030,F4:0.045,Champion:0.070};
 
 var FIRST_FOUR=[
   {id:"FF1",teamA:{name:"UMBC",kenpom:-2.84,torvik:0.4449},teamB:{name:"Howard",kenpom:-3.01,torvik:0.4359},slotId:50,label:"Midwest 16 · Winner plays Michigan"},
@@ -49,17 +49,16 @@ var FIRST_FOUR=[
   {id:"FF4",teamA:{name:"Miami OH",kenpom:8.26,torvik:0.7177},teamB:{name:"SMU",kenpom:18.09,torvik:0.8611},slotId:58,label:"Midwest 11 · Winner plays Tennessee"}
 ];
 
-// Known 2026 tournament injuries
 var INJURY_DATA=[
   {team:"Duke",severity:"High",injuries:[
     {player:"Caleb Foster",status:"Questionable",detail:"Foot injury, missed ACC Tournament games. Key guard averaging 12 PPG."},
-    {player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice. Backup big man."}
+    {player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice."}
   ]},
   {team:"Michigan",severity:"Medium",injuries:[
     {player:"L.J. Cason",status:"Questionable",detail:"Hand injury suffered late in Big Ten Tournament. Starting guard averaging 14 PPG."}
   ]},
   {team:"Gonzaga",severity:"High",injuries:[
-    {player:"Braden Huff",status:"Out",detail:"Knee injury, out since mid-January. Coach Few confirmed OUT this weekend. Gonzaga 9 pts worse per game without him."}
+    {player:"Braden Huff",status:"Out",detail:"Knee injury, out since mid-January. Confirmed OUT this weekend. Gonzaga 9 pts worse per game without him."}
   ]},
   {team:"Louisville",severity:"Medium",injuries:[
     {player:"Mikel Brown Jr.",status:"Questionable",detail:"Lower body injury, limited practice. Key to Louisville upset potential."}
@@ -83,7 +82,7 @@ function runSim(teams,N,blendW,liveWinners){
   var byId={},baseRat={};
   for(var i=0;i<teams.length;i++){byId[teams[i].id]=teams[i];baseRat[teams[i].id]=blendR(teams[i],blendW);}
   var wins={};
-  for(var i=0;i<teams.length;i++)wins[teams[i].id]={R64:0,R32:0,S16:0,E8:0,F4:0,NCG:0,Champion:0};
+  for(var i=0;i<teams.length;i++)wins[teams[i].id]={R64:0,R32:0,S16:0,E8:0,F4:0,Champion:0};
   function playGame(idA,idB,gk,rat){
     if(lw[gk])return lw[gk];
     var u=rng();while(u===0)u=rng();
@@ -136,7 +135,7 @@ function runSim(teams,N,blendW,liveWinners){
     }
     var a=f4w[0],b=f4w[1];if(!a||!b)continue;
     var wid=playGame(a.id,b.id,"NCG_0",rat);
-    wins[wid].NCG++;wins[wid].Champion++;
+    wins[wid].Champion++;
   }
   var probs={};
   for(var i=0;i<teams.length;i++){
@@ -489,7 +488,6 @@ function App(){
       setMsg("Imported.");setTimeout(function(){setMsg("");},3000);
     }catch(e){setIe("Invalid data.");}
   }
-
   function loadInjuries(){
     setInjLoading(true);
     setTimeout(function(){
@@ -588,7 +586,7 @@ function App(){
   function GameCard(props){
     var g=props.game,showRound=props.showRound;
     var tA=g.tA,tB=g.tB,locked=!!g.winner;
-    var rkMap={"R64":"R64","R32":"R32","S16":"S16","E8":"E8","F4":"F4","NCG":"NCG"};
+    var rkMap={"R64":"R64","R32":"R32","S16":"S16","E8":"E8","F4":"F4","NCG":"Champion"};
     var rk=rkMap[g.round]||"Champion";
     if(!tA&&!tB)return ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"8px",marginBottom:"6px",opacity:0.35,border:"1px solid #1e293b"}},ce("div",{style:{fontSize:"10px",color:"#475569",textAlign:"center"}},"TBD"));
     function row(t,opp){
@@ -714,7 +712,6 @@ function App(){
   if(!hydrated)return ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},"Loading...");
 
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
-
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap"}},
         ce("span",{style:{fontSize:"22px"}},"🏀"),
@@ -737,7 +734,6 @@ function App(){
           ce("input",{type:"range",min:0,max:1,step:0.05,value:blendW,onChange:function(ev){setBlendW(parseFloat(ev.target.value));}}))
       )
     ),
-
     ce("div",{style:{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",alignItems:"center",overflowX:"auto"}},
       [["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"],["injuries","🏥 Injuries"]].map(function(pair){
         return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",whiteSpace:"nowrap",
@@ -751,7 +747,6 @@ function App(){
         ce("button",{onClick:function(){doRunSim(true);},disabled:simming,style:bSt({background:simming?"#334155":"#1d4ed8",color:"#fff",minWidth:"90px",cursor:simming?"not-allowed":"pointer"})},simming?"⏳ Running...":"▶ Run Sim")
       )
     ),
-
     msg?ce("div",{style:{background:"#14532d",color:"#4ade80",padding:"8px 16px",fontSize:"11px",display:"flex",justifyContent:"space-between"}},
       ce("span",{},msg),ce("button",{onClick:function(){setMsg("");},style:{background:"none",border:"none",color:"#86efac",cursor:"pointer",fontSize:"16px"}},"×")):null,
 
@@ -854,7 +849,7 @@ function App(){
           ce("table",{},
             ce("thead",{},ce("tr",{},
               TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),
-              TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("NCG",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),
+              TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),
               TH("Spread",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Line%",{textAlign:"center"}),TH("Sim%",{textAlign:"center"}),TH("Edge",{textAlign:"center"}),
               TH("Implied$",{textAlign:"center"}),TH("Impl Sprd",{textAlign:"center"})
             )),
@@ -867,7 +862,7 @@ function App(){
       ce("div",{},
         ce("div",{style:{background:"#1e293b",borderRadius:"7px",padding:"10px 12px",marginBottom:"10px",border:"1px solid #334155",display:"flex",gap:"16px",flexWrap:"wrap",alignItems:"center"}},
           ce("div",{},ce("div",{style:{fontSize:"10px",color:"#94a3b8",marginBottom:"3px"}},"Total Pot ($)"),ce("input",{type:"number",value:calcPot,onChange:function(ev){setCalcPot(parseFloat(ev.target.value)||0);},style:iSt({width:"90px",padding:"5px 8px"})})),
-          ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · NCG=7%")," of pot"),
+          ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7%")," of pot"),
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
           ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt({marginLeft:"auto"})},
             ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"))
@@ -890,13 +885,13 @@ function App(){
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},
           ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa"}},"🏥 Tournament Injury Report"),
-          ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},"Known injuries entering the 2026 tournament. Use the Inj column in Setup to apply adjustments to the sim.")
+          ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},"Known injuries entering the 2026 tournament. Use the Inj column in Setup to apply adjustments.")
         ),
-        ce("button",{onClick:loadInjuries,disabled:injLoading,style:bSt({background:injLoading?"#334155":"#0e7490",color:"#fff",minWidth:"130px",cursor:injLoading?"not-allowed":"pointer"})},injLoading?"⏳ Loading...":"🔄 Load Report")
+        ce("button",{onClick:loadInjuries,disabled:injLoading,style:bSt({background:injLoading?"#334155":"#0e7490",color:"#fff",minWidth:"130px"})},injLoading?"⏳ Loading...":"🔄 Load Report")
       ),
       !injData&&!injLoading?ce("div",{style:{textAlign:"center",padding:"60px",color:"#64748b"}},
         ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"🏥"),
-        ce("div",{style:{fontSize:"14px",fontWeight:600,marginBottom:"6px"}},"Click Load Report to view injury data")
+        ce("div",{style:{fontSize:"14px",fontWeight:600}},"Click Load Report to view injury data")
       ):null,
       injData?ce("div",{},
         ce("div",{style:{fontSize:"10px",color:"#475569",marginBottom:"10px",textAlign:"right"}},"Last updated: "+injData.timestamp),
