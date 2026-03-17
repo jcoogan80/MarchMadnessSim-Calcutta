@@ -32,7 +32,7 @@ function mulberry32(seed){
   };
 }
 function b2pd(b){var p=Math.max(0.001,Math.min(0.999,b));return Math.log(p/(1-p))/0.163;}
-function blendR(t,w){return(1-w)*t.kenpom+w*b2pd(t.torvik)+(t.adj||0)+(t.adjInj||0);}
+function blendR(t,w,adj){return(1-w)*t.kenpom+w*b2pd(t.torvik)+(adj?(t.adj||0):0)+(t.adjInj||0);}
 function sp2wp(s){return 1/(1+Math.exp(-0.163*(-s)));}
 
 var REGIONS=["South","East","West","Midwest"];
@@ -60,10 +60,10 @@ var INJURY_DATA=[
   {team:"St. Johns",severity:"Low",injuries:[{player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness after Big East Tournament. Expected available."}]}
 ];
 
-function runSim(teams,N,blendW,liveWinners){
+function runSim(teams,N,blendW,liveWinners,useAdj){
   var rng=mulberry32(20250316),STD=11.2,lw=liveWinners||{};
   var byId={},baseRat={};
-  for(var i=0;i<teams.length;i++){byId[teams[i].id]=teams[i];baseRat[teams[i].id]=blendR(teams[i],blendW);}
+  for(var i=0;i<teams.length;i++){byId[teams[i].id]=teams[i];baseRat[teams[i].id]=blendR(teams[i],blendW,useAdj);}
   var wins={};
   for(var i=0;i<teams.length;i++)wins[teams[i].id]={R64:0,R32:0,S16:0,E8:0,F4:0,Champion:0};
   function playGame(idA,idB,gk,rat){
@@ -308,6 +308,7 @@ function App(){
   var _injLoading=useState(false),injLoading=_injLoading[0],setInjLoading=_injLoading[1];
   var _calcExO=useState(false),calcExO=_calcExO[0],setCalcExO=_calcExO[1];
   var _calcExT=useState(""),calcExT=_calcExT[0],setCalcExT=_calcExT[1];
+  var _useAdj=useState(true),useAdj=_useAdj[0],setUseAdj=_useAdj[1];
   // Compare tab state
   var _cmpA=useState(""),cmpA=_cmpA[0],setCmpA=_cmpA[1];
   var _cmpB=useState(""),cmpB=_cmpB[0],setCmpB=_cmpB[1];
@@ -385,10 +386,10 @@ function App(){
   }
   function doRunSim(andSwitch){
     setSimming(true);
-    var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners);
+    var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners),ua=useAdj;
     setTimeout(function(){
       var t0=performance.now();
-      var res=runSim(snap,sn,sb,slw);
+      var res=runSim(snap,sn,sb,slw,ua);
       setSimTime(((performance.now()-t0)/1000).toFixed(2));
       setSimRes(res);setSimming(false);
       if(andSwitch)setTab("results");
@@ -399,10 +400,10 @@ function App(){
     if(!hydrated||!simResults)return;
     if(rerunTimer.current)clearTimeout(rerunTimer.current);
     rerunTimer.current=setTimeout(function(){
-      setSimRes(runSim(teams,numSims,blendW,liveWinners));
+      setSimRes(runSim(teams,numSims,blendW,liveWinners,useAdj));
     },100);
     return function(){clearTimeout(rerunTimer.current);};
-  },[liveWinners]);
+  },[liveWinners,useAdj]);
 
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
@@ -634,7 +635,7 @@ function App(){
     var q=search.toLowerCase();
     if(q)t=t.filter(function(x){return x.name.toLowerCase().indexOf(q)>=0||x.region.toLowerCase().indexOf(q)>=0;});
     if(sortBy==="seed")t.sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
-    else if(sortBy==="blend")t.sort(function(a,b){return blendR(b,blendW)-blendR(a,blendW);});
+    else if(sortBy==="blend")t.sort(function(a,b){return blendR(b,blendW,useAdj)-blendR(a,blendW,useAdj);});
     else if(sortBy==="region")t.sort(function(a,b){return a.region.localeCompare(b.region)||a.seed-b.seed;});
     else if(sortBy==="champ"&&simResults)t.sort(function(a,b){return((simResults[b.id]&&simResults[b.id].Champion)||0)-((simResults[a.id]&&simResults[a.id].Champion)||0);});
     else if(sortBy==="edge"&&simResults)t.sort(function(a,b){
@@ -720,7 +721,8 @@ function App(){
 
   var setupRows=sortedTeams.map(function(team){
     var adjS=team.adjSheet||0,adjC=team.adjClaude||0,adjI=team.adjInj||0,adj=team.adj||0;
-    var bl=blendR(team,blendW),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
+    var bl=blendR(team,blendW,useAdj),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
+    var adjActive=useAdj&&(adj!==0||adjI!==0);
     return ce("tr",{key:team.id,onClick:function(){setEditing(isEdit?null:team.id);},style:{cursor:"pointer",background:isEdit?"#1e3a5f":"transparent"}},
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},team.region)),
       TD(isEdit?ce("input",{type:"number",min:"1",max:"16",value:team.seed,onChange:function(ev){updTeam(team.id,"seed",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"45px",border:"1px solid #f59e0b"})}):badge(team.seed)),
@@ -732,7 +734,8 @@ function App(){
       TD(ce("input",{type:"number",step:"0.5",value:adjI===0?"":adjI,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjInj",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"46px",border:"1px solid "+(adjI>0?"#4ade80":adjI<0?"#ef4444":"#334155"),color:adjI>0?"#4ade80":adjI<0?"#ef4444":"#94a3b8"})}),{borderLeft:"1px solid #334155"}),
       TD([
         ce("span",{key:"v",style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:700}},(bl>0?"+":"")+bl.toFixed(1)),
-        (adj!==0||adjI!==0)?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:(adj+adjI)>0?"#4ade80":"#f87171",fontWeight:700}},((adj+adjI)>0?"↑":"↓")+Math.abs(adj+adjI).toFixed(1)):
+        adjActive?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:(adj+adjI)>0?"#4ade80":"#f87171",fontWeight:700}},((adj+adjI)>0?"↑":"↓")+Math.abs(adj+adjI).toFixed(1)):
+        !useAdj&&(adj!==0)?ce("span",{key:"off",style:{marginLeft:"4px",fontSize:"9px",color:"#475569"}},"adj off"):
         dis>4?ce("span",{key:"s",style:{marginLeft:"5px",fontSize:"9px",color:"#fb923c"}},"split"):null
       ],{borderLeft:"1px solid #1e293b"}),
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},isEdit?"done":"edit"))
@@ -743,7 +746,7 @@ function App(){
     var p=simResults[team.id]||{},sm=r1Map[team.id];
     var simWp=p.R64||0,lineWp=sm&&sm.lineWp!==null?sm.lineWp:null;
     var edge=lineWp!==null?(simWp-lineWp)*100:null,es=edgeSt(edge);
-    var bl=blendR(team,blendW),isFav=sm&&sm.isFav,key=sm?sm.key:null;
+    var bl=blendR(team,blendW,useAdj),isFav=sm&&sm.isFav,key=sm?sm.key:null;
     var spreadCell=isFav
       ?ce("input",{type:"number",placeholder:"-14.5",value:key&&lines[key]||"",onChange:function(ev){var v=ev.target.value,k=key;setLines(function(prev){var n=Object.assign({},prev);n[k]=v;return n;});},style:iSt({width:"70px"})})
       :ce("span",{style:{color:"#475569",fontSize:"10px"}},sm?"dog vs #"+sm.opp.seed:"--");
@@ -781,7 +784,7 @@ function App(){
     var sm=r1Map[team.id],lineWp=sm&&sm.lineWp!==null?sm.lineWp:null;
     var simWp=probs.R64||0,edge=lineWp!==null?(simWp-lineWp)*100:null;
     var es=edgeSt(edge),fes=fEvSt(fullEvPct),r1es=evSt(r1Ev);
-    var bl=blendR(team,blendW),tid=team.id;
+    var bl=blendR(team,blendW,useAdj),tid=team.id;
 
     // Blend columns — look up by normalised name
     var bEntry=blendMap[cmpNorm(team.name)]||null;
@@ -1014,6 +1017,15 @@ function App(){
           }():null,
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
           ce("div",{style:{marginLeft:"auto",display:"flex",gap:"8px",alignItems:"center"}},
+            ce("button",{
+              onClick:function(){setUseAdj(function(v){return !v;});},
+              style:bSt({
+                background:useAdj?"#1e3a5f":"#111827",
+                color:useAdj?"#f59e0b":"#475569",
+                border:"1px solid "+(useAdj?"#f59e0b":"#334155"),
+                fontSize:"11px",padding:"6px 12px"
+              })
+            },useAdj?"⚡ Adjs: ON":"⚡ Adjs: OFF"),
             ce("button",{onClick:copyCalcuttaTable,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166634",fontSize:"11px",padding:"6px 12px"})},"📋 Export for Compare"),
             ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},
               ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"),
