@@ -205,6 +205,7 @@ var DEFAULT_TEAMS=[
 {id:64,name:"Tennessee St",seed:15,region:"Midwest",kenpom:-1.80,torvik:0.3997}
 ];
 
+// ── NAME NORMALISATION ───────────────────────────────────────────────────────
 var CMP_ALIASES={"connecticut":"uconn","uconn":"uconn","unc":"north carolina","nc state":"nc state","ncstate":"nc state","saint johns":"st johns","st johns":"st johns","st. johns":"st johns","st john's":"st johns","ohio state":"ohio st","ohio st":"ohio st","michigan state":"michigan st","michigan st":"michigan st","iowa state":"iowa st","iowa st":"iowa st","florida state":"florida st","san diego state":"san diego st","colorado state":"colorado st","utah state":"utah st","utah st":"utah st","mcneese state":"mcneese","mcneese st":"mcneese","mcneese":"mcneese","saint marys":"st marys","saint mary's":"st marys","st. marys":"st marys","st marys":"st marys","st mary's":"st marys","texas a&m":"texas am","texas am":"texas am","ole miss":"mississippi","vcu":"vcu","byu":"byu","smu":"smu","ucf":"ucf","lsu":"lsu","northern iowa":"n iowa","n iowa":"n iowa","north dakota st":"n dakota st","n dakota st":"n dakota st","north dakota state":"n dakota st","kennesaw st":"kennesaw st","kennesaw state":"kennesaw st","prairie view am":"prairie view","prairie view a&m":"prairie view","long island":"liu","liu brooklyn":"liu","hawai'i":"hawaii","hawaii":"hawaii","south florida":"s florida","s florida":"s florida","usf":"s florida","wright state":"wright st","wright st":"wright st","tennessee state":"tennessee st","tennessee st":"tennessee st","cal baptist":"cal baptist","california baptist":"cal baptist"};
 function cmpNorm(s){s=(s||"").toLowerCase().replace(/[.''\u2019]/g,"").replace(/-/g," ").replace(/\s+/g," ").trim();return CMP_ALIASES[s]||s;}
 
@@ -234,7 +235,7 @@ function badge(s){return ce("span",{style:{background:seedBg(s),color:"#fff",bor
 function TH(txt,st){return ce("th",{style:Object.assign({padding:"7px 8px",color:"#94a3b8",borderBottom:"1px solid #334155",background:"#1e293b",fontSize:"11px",textAlign:"left",whiteSpace:"nowrap"},st||{})},txt);}
 function TD(c,st){return ce("td",{style:Object.assign({padding:"6px 8px",fontSize:"11px",borderBottom:"1px solid #111827"},st||{})},c);}
 
-// ── COMPARE PARSER ───────────────────────────────────────────────────────────
+// ── COMPARE SOURCE PARSER ────────────────────────────────────────────────────
 function parseCmpSource(raw){
   if(!raw.trim())return[];
   var lines=raw.trim().split(/\r?\n/),results=[];
@@ -316,6 +317,9 @@ function App(){
   var _cmpDir=useState("asc"),cmpDir=_cmpDir[0],setCmpDir=_cmpDir[1];
   var _cmpFilter=useState("all"),cmpFilter=_cmpFilter[0],setCmpFilter=_cmpFilter[1];
   var _cmpSearch=useState(""),cmpSearch=_cmpSearch[0],setCmpSearch=_cmpSearch[1];
+  // blendMap: normName -> { blendPct, blendVal } — shared between Compare & Calcutta
+  var _blendMap=useState({}),blendMap=_blendMap[0],setBlendMap=_blendMap[1];
+
   var saveTimer=useRef(null);
   var latestRef=useRef({});
 
@@ -499,7 +503,7 @@ function App(){
     setCalcExT(lo.join("\n"));setCalcExO(true);
   }
 
-  // ── COMPARE TAB LOGIC ─────────────────────────────────────────────────────
+  // ── COMPARE LOGIC ────────────────────────────────────────────────────────
   function runCompare(){
     var a=parseCmpSource(cmpA),b=parseCmpSource(cmpB);
     if(!a.length&&!b.length)return;
@@ -513,8 +517,26 @@ function App(){
     b.forEach(function(tB){
       if(!usedB[tB.name])rows.push({raw:tB.raw,name:tB.name,seed:tB.seed,region:tB.region,evA:null,evB:tB.ev});
     });
-    setCmpRows(rows);setCmpDone(true);
+    setCmpRows(rows);
+    setCmpDone(true);
+
+    // Build blendMap: for each matched row compute (avgEV / totalPot) and avgEV
+    // totalPot = sum of all matched avgEVs (re-normalised so pcts sum to 100%)
+    var matched=rows.filter(function(r){return r.evA!==null&&r.evB!==null;});
+    var totalAvg=matched.reduce(function(s,r){return s+(r.evA+r.evB)/2;},0);
+    var newMap={};
+    if(totalAvg>0){
+      matched.forEach(function(r){
+        var avg=(r.evA+r.evB)/2;
+        newMap[r.name]={
+          blendPct: avg/totalAvg,          // fraction of total pot
+          blendAvgEV: avg                  // raw avg EV before rescaling
+        };
+      });
+    }
+    setBlendMap(newMap);
   }
+
   function autoFillA(){
     if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
     var unit=calcPot;
@@ -527,6 +549,8 @@ function App(){
     });
     setCmpA(lo.join("\n"));
   }
+
+  var hasBlend=Object.keys(blendMap).length>0;
 
   var cmpFiltered=useMemo(function(){
     var q=cmpSearch.toLowerCase();
@@ -545,12 +569,16 @@ function App(){
       else if(cmpSort==="evA"){va=a.evA||0;vb=b.evA||0;}
       else if(cmpSort==="evB"){va=a.evB||0;vb=b.evB||0;}
       else if(cmpSort==="avg"){va=(a.evA!==null&&a.evB!==null)?(a.evA+a.evB)/2:0;vb=(b.evA!==null&&b.evB!==null)?(b.evA+b.evB)/2:0;}
+      else if(cmpSort==="blendpct"){
+        va=blendMap[a.name]?blendMap[a.name].blendPct:0;
+        vb=blendMap[b.name]?blendMap[b.name].blendPct:0;
+      }
       else if(cmpSort==="delta"){va=Math.abs((a.evB||0)-(a.evA||0));vb=Math.abs((b.evB||0)-(b.evA||0));}
       else{va=0;vb=0;}
       return cmpDir==="asc"?va-vb:vb-va;
     });
     return f;
-  },[cmpRows,cmpSearch,cmpFilter,cmpSort,cmpDir]);
+  },[cmpRows,cmpSearch,cmpFilter,cmpSort,cmpDir,blendMap]);
 
   var cmpStats=useMemo(function(){
     var matched=cmpRows.filter(function(r){return r.evA!==null&&r.evB!==null;});
@@ -576,7 +604,7 @@ function App(){
     if(d<500)return ce("span",{style:{background:"rgba(124,45,18,0.2)",color:"#fb923c",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Diff");
     return ce("span",{style:{background:"rgba(127,29,29,0.2)",color:"#f87171",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Big Diff");
   }
-  function fmtEV(v,dim){if(v===null||v===undefined)return ce("span",{style:{color:"#334155"}},"--");var s=v.toFixed(0);return ce("span",{style:{color:dim?"#64748b":v>=0?"#60a5fa":"#f87171",fontWeight:dim?400:600}},"$"+s);}
+  function fmtEV(v){if(v===null||v===undefined)return ce("span",{style:{color:"#334155"}},"--");return ce("span",{style:{color:v>=0?"#60a5fa":"#f87171",fontWeight:600}},"$"+v.toFixed(0));}
   function fmtAvg(a,b){if(a===null||b===null)return ce("span",{style:{color:"#334155"}},"--");var v=(a+b)/2;return ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+v.toFixed(0));}
   function fmtDelta(v){if(v===null)return ce("span",{style:{color:"#334155"}},"--");var a=Math.abs(v);var col=a<50?"#94a3b8":v>0?"#4ade80":"#f87171";return ce("span",{style:{color:col,fontWeight:a>=50?700:400}},(v>=0?"+":"")+v.toFixed(0));}
 
@@ -620,8 +648,12 @@ function App(){
       function ev(tm){var p=parseFloat(calcPrices[tm.id])||0;if(!p)return-9999;var ret=0;ROUNDS.forEach(function(r){ret+=((simResults[tm.id]&&simResults[tm.id][r])||0)*RPAY[r]*unit;});return ret-p;}
       return ev(b)-ev(a);
     });
+    else if(sortBy==="blendval"&&hasBlend)t.sort(function(a,b){
+      var bA=blendMap[cmpNorm(a.name)],bB=blendMap[cmpNorm(b.name)];
+      return (bB?bB.blendPct:0)-(bA?bA.blendPct:0);
+    });
     return t;
-  },[teams,search,sortBy,simResults,r1Map,calcPrices,unit,blendW]);
+  },[teams,search,sortBy,simResults,r1Map,calcPrices,unit,blendW,blendMap,hasBlend]);
 
   var bracketState=useMemo(function(){
     var byId={};teams.forEach(function(t){byId[t.id]=t;});
@@ -740,6 +772,7 @@ function App(){
     return ce("tr",{key:team.id,style:{background:edge!==null&&edge>5?"rgba(22,101,52,0.08)":"transparent"}},cells);
   }):[];
 
+  // ── CALCUTTA ROWS (with Blend % and Blend Value) ─────────────────────────
   var calcRows=simResults?sortedTeams.map(function(team){
     var probs=simResults[team.id]||{},champ=probs.Champion||0;
     var price=parseFloat(calcPrices[team.id])||0;
@@ -750,12 +783,29 @@ function App(){
     var simWp=probs.R64||0,edge=lineWp!==null?(simWp-lineWp)*100:null;
     var es=edgeSt(edge),fes=fEvSt(fullEvPct),r1es=evSt(r1Ev);
     var bl=blendR(team,blendW),tid=team.id;
+
+    // Blend columns — look up by normalised name
+    var bEntry=blendMap[cmpNorm(team.name)]||null;
+    var blendPctVal=bEntry?bEntry.blendPct:null;        // fraction 0-1
+    var blendDollar=bEntry?bEntry.blendPct*unit:null;   // pot × blend%
+
+    var blendPctCell=blendPctVal!==null
+      ?ce("span",{style:{color:"#e879f9",fontWeight:700}},(blendPctVal*100).toFixed(2)+"%")
+      :ce("span",{style:{color:"#334155"}},"--");
+    var blendDollarCell=blendDollar!==null
+      ?ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+blendDollar.toFixed(0))
+      :ce("span",{style:{color:"#334155"}},"--");
+
     return ce("tr",{key:team.id,style:{background:fullEv!==null&&fullEv>0?"rgba(22,101,52,0.08)":fullEv!==null&&fullEv<-50?"rgba(127,29,29,0.05)":"transparent"}},
       TD(ce("span",{},[ce("span",{key:"r",style:{color:"#475569",marginRight:"4px",fontSize:"10px"}},team.region),team.name]),{fontWeight:600,whiteSpace:"nowrap"}),
       TD(badge(team.seed)),
       TD(ce("span",{style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:600}},(bl>0?"+":"")+bl.toFixed(1)),{textAlign:"center"}),
       TD((champ*100).toFixed(1)+"%",{textAlign:"center",color:champ>=0.1?"#4ade80":champ>=0.04?"#60a5fa":"#94a3b8",fontWeight:champ>0.05?700:400}),
       TD("$"+expRet.toFixed(0),{textAlign:"center",color:"#60a5fa",fontWeight:600}),
+      // ── Blend % and Blend Value right after Exp Return ──
+      TD(blendPctCell,{textAlign:"center",borderLeft:"2px solid #4a1d96"}),
+      TD(blendDollarCell,{textAlign:"center"}),
+      // ─────────────────────────────────────────────────────
       TD(ce("input",{type:"number",placeholder:"0",value:calcPrices[tid]||"",onChange:function(ev){var v=ev.target.value,id=tid;setCalcPrices(function(prev){var n=Object.assign({},prev);n[id]=v;return n;});},style:iSt({width:"60px"})}),{textAlign:"center",borderLeft:"1px solid #1e293b"}),
       TD(r1es.label,{textAlign:"center",fontWeight:700,color:r1es.color}),
       TD(fullEv!==null?(fullEv>=0?"+":"")+"$"+Math.abs(fullEv).toFixed(0):"--",{textAlign:"center",fontWeight:700,color:fes.color}),
@@ -786,7 +836,7 @@ function App(){
 
   if(!hydrated)return ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},"Loading...");
 
-  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"],["compare","⚖️ Compare"],["injuries","🏥 Injuries"]];
+  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["injuries","🏥 Injuries"]];
 
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
@@ -815,7 +865,7 @@ function App(){
       tabBar.map(function(pair){
         return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",whiteSpace:"nowrap",
           background:tab===pair[0]?"#1e40af":"transparent",
-          color:tab===pair[0]?"#fff":pair[0]==="live"&&(gamesEntered+ffEntered>0)?"#4ade80":"#94a3b8",
+          color:tab===pair[0]?"#fff":pair[0]==="live"&&(gamesEntered+ffEntered>0)?"#4ade80":pair[0]==="calcutta"&&hasBlend?"#e879f9":"#94a3b8",
           borderBottom:tab===pair[0]?"2px solid #60a5fa":"2px solid transparent"})},pair[1]);
       }),
       ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center",padding:"0 12px",flexShrink:0}},
@@ -827,7 +877,7 @@ function App(){
     msg?ce("div",{style:{background:"#14532d",color:"#4ade80",padding:"8px 16px",fontSize:"11px",display:"flex",justifyContent:"space-between"}},
       ce("span",{},msg),ce("button",{onClick:function(){setMsg("");},style:{background:"none",border:"none",color:"#86efac",cursor:"pointer",fontSize:"16px"}},"×")):null,
 
-    // ── SETUP TAB ────────────────────────────────────────────────────────────
+    // ── SETUP TAB ─────────────────────────────────────────────────────────────
     tab==="setup"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"12px",fontWeight:700,color:"#60a5fa"}},"Load Ratings"),ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste name/kenpom/torvik from Google Sheet")),
@@ -854,7 +904,7 @@ function App(){
           ce("tbody",{},setupRows)))
     ):null,
 
-    // ── LIVE TAB ─────────────────────────────────────────────────────────────
+    // ── LIVE TAB ──────────────────────────────────────────────────────────────
     tab==="live"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"40px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -944,19 +994,24 @@ function App(){
         ce("div",{style:{background:"#1e293b",borderRadius:"7px",padding:"10px 12px",marginBottom:"10px",border:"1px solid #334155",display:"flex",gap:"16px",flexWrap:"wrap",alignItems:"center"}},
           ce("div",{},ce("div",{style:{fontSize:"10px",color:"#94a3b8",marginBottom:"3px"}},"Total Pot ($)"),ce("input",{type:"number",value:calcPot,onChange:function(ev){setCalcPot(parseFloat(ev.target.value)||0);},style:iSt({width:"90px",padding:"5px 8px"})})),
           ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7%")," of pot"),
+          hasBlend?ce("span",{style:{fontSize:"10px",color:"#e879f9",fontWeight:600}},"✦ Blend values active — "+Object.keys(blendMap).length+" teams"):
+            ce("span",{style:{fontSize:"10px",color:"#475569"}},"Go to Compare tab to activate Blend % columns"),
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
           ce("div",{style:{marginLeft:"auto",display:"flex",gap:"8px",alignItems:"center"}},
-            ce("button",{onClick:copyCalcuttaTable,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"11px",padding:"6px 12px"})},"📋 Export for Compare"),
+            ce("button",{onClick:copyCalcuttaTable,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166634",fontSize:"11px",padding:"6px 12px"})},"📋 Export for Compare"),
             ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},
-              ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"))
+              ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"),
+              hasBlend?ce("option",{value:"blendval"},"Blend Value"):null)
           )
         ),
         ce("div",{style:{overflowX:"auto"}},
           ce("table",{},
             ce("thead",{},ce("tr",{},
               TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("Champ%",{textAlign:"center"}),TH("Exp Return",{textAlign:"center"}),
-              TH("Bid",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("R1-Only EV",{textAlign:"center"}),TH("Full EV $",{textAlign:"center"}),TH("Full EV%",{textAlign:"center"}),
-              TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Rec")
+              TH("Blend %",{textAlign:"center",borderLeft:"2px solid #4a1d96",color:"#e879f9"}),
+              TH("Blend Value",{textAlign:"center",color:"#c084fc"}),
+              TH("Bid",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("R1-Only EV",{textAlign:"center"}),TH("Full EV $",{textAlign:"center"}),TH("Full EV%",{textAlign:"center"}),
+              TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("Rec")
             )),
             ce("tbody",{},calcRows)
           )
@@ -968,8 +1023,8 @@ function App(){
     // ── COMPARE TAB ───────────────────────────────────────────────────────────
     tab==="compare"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"12px"}},
-        ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"6px"}},"⚖️ Calcutta EV Comparison"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste EV data from two sources to compare. Source A auto-fills from your sim. Source B accepts the other app's format (Seed · Team · Region · Pot% · Value).")
+        ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"4px"}},"⚖️ Calcutta EV Comparison"),
+        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Compare your sim against another app. Blend % and Blend Value columns flow live into the Calcutta EV tab once you run Compare.")
       ),
       ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}},
         ce("div",{style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"12px"}},
@@ -988,8 +1043,9 @@ function App(){
       ),
       ce("div",{style:{display:"flex",gap:"8px",alignItems:"center",marginBottom:"14px",flexWrap:"wrap"}},
         ce("button",{onClick:runCompare,style:bSt({background:"#1d4ed8",color:"#fff"})},"⚡ Compare"),
-        ce("button",{onClick:function(){setCmpA("");setCmpB("");setCmpRows([]);setCmpDone(false);},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d"})},"Clear"),
-        cmpDone&&cmpStats?ce("span",{style:{fontSize:"11px",color:"#475569"}},cmpStats.matched+" matched · "+cmpStats.onlyA+" A-only · "+cmpStats.onlyB+" B-only"):null
+        ce("button",{onClick:function(){setCmpA("");setCmpB("");setCmpRows([]);setCmpDone(false);setBlendMap({});},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d"})},"Clear"),
+        cmpDone&&cmpStats?ce("span",{style:{fontSize:"11px",color:"#475569"}},cmpStats.matched+" matched · "+cmpStats.onlyA+" A-only · "+cmpStats.onlyB+" B-only"):null,
+        hasBlend?ce("span",{style:{fontSize:"11px",color:"#e879f9",fontWeight:600}},"✦ Blend values live in Calcutta tab"):null
       ),
       cmpDone&&cmpStats?ce("div",{style:{display:"flex",gap:"16px",flexWrap:"wrap",background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"10px 14px",marginBottom:"14px"}},
         [
@@ -1014,44 +1070,48 @@ function App(){
             ce("option",{value:"seed"},"Sort: Seed"),
             ce("option",{value:"evA"},"Sort: EV A"),
             ce("option",{value:"evB"},"Sort: EV B"),
-            ce("option",{value:"avg"},"Sort: Avg"),
+            ce("option",{value:"avg"},"Sort: Avg EV"),
+            ce("option",{value:"blendpct"},"Sort: Blend %"),
             ce("option",{value:"delta"},"Sort: |Delta|"),
             ce("option",{value:"name"},"Sort: Name")
           ),
           ce("select",{value:cmpDir,onChange:function(ev){setCmpDir(ev.target.value);},style:sSt({fontSize:"11px"})},
             ce("option",{value:"asc"},"↑ Asc"),
             ce("option",{value:"desc"},"↓ Desc")
-          ),
-          ce("div",{style:{display:"flex",gap:"10px",flexWrap:"wrap",fontSize:"10px",color:"#64748b",marginLeft:"4px"}},
-            ce("span",{},[ce("span",{style:{background:"rgba(22,101,52,0.2)",color:"#4ade80",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Agree")," <$50"]),
-            ce("span",{},[ce("span",{style:{background:"rgba(30,64,175,0.2)",color:"#93c5fd",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Close")," $50–200"]),
-            ce("span",{},[ce("span",{style:{background:"rgba(124,45,18,0.2)",color:"#fb923c",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Diff")," $200–500"]),
-            ce("span",{},[ce("span",{style:{background:"rgba(127,29,29,0.2)",color:"#f87171",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Big Diff")," >$500"])
           )
         ),
         ce("div",{style:{overflowX:"auto"}},
           ce("table",{},
             ce("thead",{},ce("tr",{},
               TH("Seed"),TH("Team"),TH("Region"),
-              TH("EV — Source A",{textAlign:"right",color:"#60a5fa"}),
-              TH("EV — Source B",{textAlign:"right",color:"#a78bfa"}),
-              TH("Avg A+B",{textAlign:"right",color:"#c084fc",borderLeft:"2px solid #334155"}),
+              TH("EV — A",{textAlign:"right",color:"#60a5fa"}),
+              TH("EV — B",{textAlign:"right",color:"#a78bfa"}),
+              TH("Avg A+B",{textAlign:"right",color:"#c084fc",borderLeft:"1px solid #334155"}),
+              TH("Blend %",{textAlign:"right",color:"#e879f9",borderLeft:"2px solid #4a1d96"}),
+              TH("Blend Value",{textAlign:"right",color:"#c084fc"}),
               TH("Delta (B−A)",{textAlign:"right"}),
               TH("Agreement")
             )),
             ce("tbody",{},
               cmpFiltered.length===0
-                ?ce("tr",{},ce("td",{colSpan:8,style:{textAlign:"center",padding:"40px",color:"#475569"}},"No rows match filter."))
+                ?ce("tr",{},ce("td",{colSpan:10,style:{textAlign:"center",padding:"40px",color:"#475569"}},"No rows match filter."))
                 :cmpFiltered.map(function(r){
                   var delta=(r.evA!==null&&r.evB!==null)?r.evB-r.evA:null;
                   var isUnmatched=r.evA===null||r.evB===null;
-                  return ce("tr",{key:r.name,style:{opacity:isUnmatched?0.5:1,background:delta!==null&&Math.abs(delta)>200?"rgba(124,45,18,0.05)":"transparent"}},
+                  var bEntry=blendMap[r.name]||null;
+                  var bPct=bEntry?(bEntry.blendPct*100).toFixed(2)+"%":"--";
+                  var bVal=bEntry?"$"+(bEntry.blendPct*calcPot).toFixed(0):"--";
+                  var bPctColor=bEntry?"#e879f9":"#334155";
+                  var bValColor=bEntry?"#c084fc":"#334155";
+                  return ce("tr",{key:r.name,style:{opacity:isUnmatched?0.5:1}},
                     TD(r.seed?ce("span",{style:{background:seedBg(r.seed),color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:700,fontSize:"10px"}},"#"+r.seed):""),
                     TD(ce("span",{style:{fontWeight:600,whiteSpace:"nowrap"}},r.raw)),
                     TD(ce("span",{style:{color:"#64748b",fontSize:"10px"}},r.region||"")),
-                    TD(fmtEV(r.evA,false),{textAlign:"right"}),
-                    TD(fmtEV(r.evB,false),{textAlign:"right"}),
-                    TD(fmtAvg(r.evA,r.evB),{textAlign:"right",borderLeft:"2px solid #334155"}),
+                    TD(fmtEV(r.evA),{textAlign:"right"}),
+                    TD(fmtEV(r.evB),{textAlign:"right"}),
+                    TD(fmtAvg(r.evA,r.evB),{textAlign:"right",borderLeft:"1px solid #334155"}),
+                    TD(ce("span",{style:{color:bPctColor,fontWeight:700}},bPct),{textAlign:"right",borderLeft:"2px solid #4a1d96"}),
+                    TD(ce("span",{style:{color:bValColor,fontWeight:700}},bVal),{textAlign:"right"}),
                     TD(fmtDelta(delta),{textAlign:"right"}),
                     TD(cmpTag(r))
                   );
@@ -1062,7 +1122,7 @@ function App(){
       ):ce("div",{style:{textAlign:"center",padding:"50px",color:"#475569"}},
         ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"⚖️"),
         ce("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"6px"}},"Paste data into both sources and click Compare"),
-        ce("div",{style:{fontSize:"11px"}},"Or use Auto-fill to load your sim's current Calcutta values into Source A")
+        ce("div",{style:{fontSize:"11px"}},"Blend % and Blend Value will appear here and flow into the Calcutta EV tab automatically")
       )
     ):null,
 
@@ -1136,7 +1196,7 @@ function App(){
     calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},
         ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all (Ctrl+A), copy, then paste into Source A on the Compare tab — or use Auto-fill directly."),
+        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all (Ctrl+A), copy, then paste into Source A — or use Auto-fill on the Compare tab directly."),
         ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),
         ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},
           ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),
