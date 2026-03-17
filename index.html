@@ -205,6 +205,9 @@ var DEFAULT_TEAMS=[
 {id:64,name:"Tennessee St",seed:15,region:"Midwest",kenpom:-1.80,torvik:0.3997}
 ];
 
+var CMP_ALIASES={"connecticut":"uconn","uconn":"uconn","unc":"north carolina","nc state":"nc state","ncstate":"nc state","saint johns":"st johns","st johns":"st johns","st. johns":"st johns","st john's":"st johns","ohio state":"ohio st","ohio st":"ohio st","michigan state":"michigan st","michigan st":"michigan st","iowa state":"iowa st","iowa st":"iowa st","florida state":"florida st","san diego state":"san diego st","colorado state":"colorado st","utah state":"utah st","utah st":"utah st","mcneese state":"mcneese","mcneese st":"mcneese","mcneese":"mcneese","saint marys":"st marys","saint mary's":"st marys","st. marys":"st marys","st marys":"st marys","st mary's":"st marys","texas a&m":"texas am","texas am":"texas am","ole miss":"mississippi","vcu":"vcu","byu":"byu","smu":"smu","ucf":"ucf","lsu":"lsu","northern iowa":"n iowa","n iowa":"n iowa","north dakota st":"n dakota st","n dakota st":"n dakota st","north dakota state":"n dakota st","kennesaw st":"kennesaw st","kennesaw state":"kennesaw st","prairie view am":"prairie view","prairie view a&m":"prairie view","long island":"liu","liu brooklyn":"liu","hawai'i":"hawaii","hawaii":"hawaii","south florida":"s florida","s florida":"s florida","usf":"s florida","wright state":"wright st","wright st":"wright st","tennessee state":"tennessee st","tennessee st":"tennessee st","cal baptist":"cal baptist","california baptist":"cal baptist"};
+function cmpNorm(s){s=(s||"").toLowerCase().replace(/[.''\u2019]/g,"").replace(/-/g," ").replace(/\s+/g," ").trim();return CMP_ALIASES[s]||s;}
+
 var ALIASES={"connecticut":"uconn","texas a&m":"texas am","ole miss":"mississippi","nc state":"nc state","saint johns":"st johns","st johns":"st johns","uconn":"uconn","byu":"byu","smu":"smu","florida state":"florida st","ohio state":"ohio st","michigan state":"michigan st","penn state":"penn st","iowa state":"iowa st","san diego state":"san diego st","colorado state":"colorado st","utah state":"utah st","mcneese state":"mcneese st","saint marys":"saint marys","st marys":"saint marys","vcu":"vcu","unc":"north carolina"};
 function norm(s){var o="";s=(s||"").toLowerCase();for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c===46||c===39)continue;o+=c===45?" ":s[i];}o=o.replace(/\s+/g," ").trim();return ALIASES[o]||o;}
 function parseTorvik(r){if(!r)return NaN;r=r.toString().replace(/"/g,"").trim().split("\n")[0].trim();var v=parseFloat(r);if(!isNaN(v)&&v>=0&&v<=1)return v;var m=r.match(/0\.\d+/);return m?parseFloat(m[0]):NaN;}
@@ -230,6 +233,45 @@ function sSt(x){return Object.assign({padding:"7px 10px",borderRadius:"7px",bord
 function badge(s){return ce("span",{style:{background:seedBg(s),color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:700,fontSize:"10px"}},"#"+s);}
 function TH(txt,st){return ce("th",{style:Object.assign({padding:"7px 8px",color:"#94a3b8",borderBottom:"1px solid #334155",background:"#1e293b",fontSize:"11px",textAlign:"left",whiteSpace:"nowrap"},st||{})},txt);}
 function TD(c,st){return ce("td",{style:Object.assign({padding:"6px 8px",fontSize:"11px",borderBottom:"1px solid #111827"},st||{})},c);}
+
+// ── COMPARE PARSER ───────────────────────────────────────────────────────────
+function parseCmpSource(raw){
+  if(!raw.trim())return[];
+  var lines=raw.trim().split(/\r?\n/),results=[];
+  var REGS=["south","east","west","midwest"];
+  function isRegion(s){return REGS.indexOf((s||"").toLowerCase().trim())>=0;}
+  function isSeed(s){var v=parseInt(s);return !isNaN(v)&&v>=1&&v<=16&&s.replace(/\s/g,"").length<=2;}
+  function isPercent(s){return /[\d.]+%/.test(s);}
+  function isDollarVal(s){return /\$[\d,]+/.test(s)||/^[\d,]+$/.test(s.replace(/[$,\s]/g,""));}
+  function parseDollar(s){if(!s)return null;var c=s.replace(/[$,\s+]/g,"").replace(/--/,"").trim();if(!c||c==="-")return null;var v=parseFloat(c);return isNaN(v)?null:v;}
+  function parsePct(s){var c=(s||"").replace(/[%\s]/g,"").trim();var v=parseFloat(c);return isNaN(v)?null:v;}
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i].trim();if(!line)continue;
+    var cols=line.indexOf("\t")>=0?line.split("\t"):line.split(/  +/);
+    cols=cols.map(function(c){return c.trim().replace(/^"|"$/g,"");}).filter(function(c){return c.length>0;});
+    if(cols.length<2)continue;
+    var joined=cols.join(" ").toLowerCase();
+    if(joined.indexOf("seed")>=0&&joined.indexOf("team")>=0)continue;
+    if(joined.indexOf("projected pot")>=0)continue;
+    var seed=null,name=null,region=null,ev=null;
+    if(isSeed(cols[0])){
+      seed=parseInt(cols[0]);name=cols[1]||null;
+      for(var j=2;j<cols.length;j++)if(isRegion(cols[j])){region=cols[j];break;}
+      for(var j=2;j<cols.length;j++){if(isDollarVal(cols[j])&&!isPercent(cols[j])){var v=parseDollar(cols[j]);if(v!==null&&v>0){ev=v;break;}}}
+      if(ev===null){for(var j=2;j<cols.length;j++){if(isPercent(cols[j])){var pct=parsePct(cols[j]);if(pct!==null){ev=+(pct*1000).toFixed(0);break;}}}}
+    } else {
+      name=cols[0];
+      if(name.toLowerCase()==="team"||name.toLowerCase()==="name")continue;
+      for(var j=1;j<cols.length;j++){var v=parseDollar(cols[j]);if(v!==null){ev=v;break;}}
+      for(var j=1;j<cols.length;j++){if(isSeed(cols[j])){seed=parseInt(cols[j]);break;}}
+    }
+    if(!name)continue;
+    var nl=name.toLowerCase();
+    if(nl==="team"||nl==="name"||nl==="school"||nl.indexOf("projected")>=0)continue;
+    results.push({raw:name,name:cmpNorm(name),seed:seed,region:region||null,ev:ev});
+  }
+  return results;
+}
 
 function App(){
   var _names=useState(getNames()),profNames=_names[0],setProfNames=_names[1];
@@ -265,6 +307,15 @@ function App(){
   var _injLoading=useState(false),injLoading=_injLoading[0],setInjLoading=_injLoading[1];
   var _calcExO=useState(false),calcExO=_calcExO[0],setCalcExO=_calcExO[1];
   var _calcExT=useState(""),calcExT=_calcExT[0],setCalcExT=_calcExT[1];
+  // Compare tab state
+  var _cmpA=useState(""),cmpA=_cmpA[0],setCmpA=_cmpA[1];
+  var _cmpB=useState(""),cmpB=_cmpB[0],setCmpB=_cmpB[1];
+  var _cmpRows=useState([]),cmpRows=_cmpRows[0],setCmpRows=_cmpRows[1];
+  var _cmpDone=useState(false),cmpDone=_cmpDone[0],setCmpDone=_cmpDone[1];
+  var _cmpSort=useState("seed"),cmpSort=_cmpSort[0],setCmpSort=_cmpSort[1];
+  var _cmpDir=useState("asc"),cmpDir=_cmpDir[0],setCmpDir=_cmpDir[1];
+  var _cmpFilter=useState("all"),cmpFilter=_cmpFilter[0],setCmpFilter=_cmpFilter[1];
+  var _cmpSearch=useState(""),cmpSearch=_cmpSearch[0],setCmpSearch=_cmpSearch[1];
   var saveTimer=useRef(null);
   var latestRef=useRef({});
 
@@ -427,9 +478,7 @@ function App(){
       var teamNames=teams.map(function(t){return t.name;});
       var result=INJURY_DATA.filter(function(d){return teamNames.indexOf(d.team)>=0;});
       var reported=result.map(function(d){return d.team;});
-      teams.forEach(function(t){
-        if(reported.indexOf(t.name)<0)result.push({team:t.name,severity:"None",injuries:[]});
-      });
+      teams.forEach(function(t){if(reported.indexOf(t.name)<0)result.push({team:t.name,severity:"None",injuries:[]});});
       var order={High:0,Medium:1,Low:2,None:3};
       result.sort(function(a,b){return order[a.severity]-order[b.severity];});
       setInjData({teams:result,timestamp:new Date().toLocaleString()});
@@ -437,27 +486,99 @@ function App(){
     },400);
   }
 
-  // ── CALCUTTA COPY TABLE ──────────────────────────────────────────────────
-  var _calcExO=useState(false),calcExO=_calcExO[0],setCalcExO=_calcExO[1];
-  var _calcExT=useState(""),calcExT=_calcExT[0],setCalcExT=_calcExT[1];
-
   function copyCalcuttaTable(){
     if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
     var unit=calcPot;
     var sorted=teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
-    var lines_out=["Seed\tTeam\tRegion\tProjected Pot%\tValue Based On Your Pot Size"];
+    var lo=["Seed\tTeam\tRegion\tProjected Pot%\tValue Based On Your Pot Size"];
     sorted.forEach(function(t){
-      var probs=simResults[t.id]||{};
-      var expRet=0,potPct=0;
-      ROUNDS.forEach(function(r){
-        expRet+=((probs[r]||0)*RPAY[r]*unit);
-        potPct+=(probs[r]||0)*RPAY[r];
-      });
-      lines_out.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));
+      var probs=simResults[t.id]||{},expRet=0,potPct=0;
+      ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);potPct+=(probs[r]||0)*RPAY[r];});
+      lo.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));
     });
-    setCalcExT(lines_out.join("\n"));
-    setCalcExO(true);
+    setCalcExT(lo.join("\n"));setCalcExO(true);
   }
+
+  // ── COMPARE TAB LOGIC ─────────────────────────────────────────────────────
+  function runCompare(){
+    var a=parseCmpSource(cmpA),b=parseCmpSource(cmpB);
+    if(!a.length&&!b.length)return;
+    var mapB={};b.forEach(function(t){mapB[t.name]=t;});
+    var rows=[],usedB={};
+    a.forEach(function(tA){
+      var tB=mapB[tA.name]||null;
+      if(tB)usedB[tA.name]=true;
+      rows.push({raw:tA.raw,name:tA.name,seed:tA.seed||(tB&&tB.seed)||null,region:tA.region||(tB&&tB.region)||null,evA:tA.ev,evB:tB?tB.ev:null});
+    });
+    b.forEach(function(tB){
+      if(!usedB[tB.name])rows.push({raw:tB.raw,name:tB.name,seed:tB.seed,region:tB.region,evA:null,evB:tB.ev});
+    });
+    setCmpRows(rows);setCmpDone(true);
+  }
+  function autoFillA(){
+    if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
+    var unit=calcPot;
+    var sorted=teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
+    var lo=["Seed\tTeam\tRegion\tProjected Pot%\tValue Based On Your Pot Size"];
+    sorted.forEach(function(t){
+      var probs=simResults[t.id]||{},expRet=0,potPct=0;
+      ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);potPct+=(probs[r]||0)*RPAY[r];});
+      lo.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));
+    });
+    setCmpA(lo.join("\n"));
+  }
+
+  var cmpFiltered=useMemo(function(){
+    var q=cmpSearch.toLowerCase();
+    var f=cmpRows.filter(function(r){
+      if(q&&r.raw.toLowerCase().indexOf(q)<0)return false;
+      if(cmpFilter==="matched"&&(r.evA===null||r.evB===null))return false;
+      if(cmpFilter==="big"&&(r.evA===null||r.evB===null||Math.abs(r.evB-r.evA)<200))return false;
+      if(cmpFilter==="onlyA"&&r.evB!==null)return false;
+      if(cmpFilter==="onlyB"&&r.evA!==null)return false;
+      return true;
+    });
+    f.sort(function(a,b){
+      var va,vb;
+      if(cmpSort==="name")return cmpDir==="asc"?a.raw.localeCompare(b.raw):b.raw.localeCompare(a.raw);
+      if(cmpSort==="seed"){va=a.seed||99;vb=b.seed||99;}
+      else if(cmpSort==="evA"){va=a.evA||0;vb=b.evA||0;}
+      else if(cmpSort==="evB"){va=a.evB||0;vb=b.evB||0;}
+      else if(cmpSort==="avg"){va=(a.evA!==null&&a.evB!==null)?(a.evA+a.evB)/2:0;vb=(b.evA!==null&&b.evB!==null)?(b.evA+b.evB)/2:0;}
+      else if(cmpSort==="delta"){va=Math.abs((a.evB||0)-(a.evA||0));vb=Math.abs((b.evB||0)-(b.evA||0));}
+      else{va=0;vb=0;}
+      return cmpDir==="asc"?va-vb:vb-va;
+    });
+    return f;
+  },[cmpRows,cmpSearch,cmpFilter,cmpSort,cmpDir]);
+
+  var cmpStats=useMemo(function(){
+    var matched=cmpRows.filter(function(r){return r.evA!==null&&r.evB!==null;});
+    if(!matched.length)return null;
+    var deltas=matched.map(function(r){return r.evB-r.evA;});
+    var absD=deltas.map(Math.abs);
+    var avg=deltas.reduce(function(s,v){return s+v;},0)/deltas.length;
+    var avgAbs=absD.reduce(function(s,v){return s+v;},0)/absD.length;
+    var maxAbs=Math.max.apply(null,absD);
+    var maxRow=matched[absD.indexOf(maxAbs)];
+    var bigCount=absD.filter(function(v){return v>200;}).length;
+    var onlyA=cmpRows.filter(function(r){return r.evA!==null&&r.evB===null;}).length;
+    var onlyB=cmpRows.filter(function(r){return r.evA===null&&r.evB!==null;}).length;
+    return{matched:matched.length,avg:avg,avgAbs:avgAbs,maxAbs:maxAbs,maxRow:maxRow,bigCount:bigCount,onlyA:onlyA,onlyB:onlyB};
+  },[cmpRows]);
+
+  function cmpTag(r){
+    if(r.evA===null)return ce("span",{style:{background:"rgba(100,116,139,0.2)",color:"#94a3b8",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"B Only");
+    if(r.evB===null)return ce("span",{style:{background:"rgba(100,116,139,0.2)",color:"#94a3b8",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"A Only");
+    var d=Math.abs(r.evB-r.evA);
+    if(d<50)return ce("span",{style:{background:"rgba(22,101,52,0.2)",color:"#4ade80",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Agree");
+    if(d<200)return ce("span",{style:{background:"rgba(30,64,175,0.2)",color:"#93c5fd",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Close");
+    if(d<500)return ce("span",{style:{background:"rgba(124,45,18,0.2)",color:"#fb923c",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Diff");
+    return ce("span",{style:{background:"rgba(127,29,29,0.2)",color:"#f87171",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Big Diff");
+  }
+  function fmtEV(v,dim){if(v===null||v===undefined)return ce("span",{style:{color:"#334155"}},"--");var s=v.toFixed(0);return ce("span",{style:{color:dim?"#64748b":v>=0?"#60a5fa":"#f87171",fontWeight:dim?400:600}},"$"+s);}
+  function fmtAvg(a,b){if(a===null||b===null)return ce("span",{style:{color:"#334155"}},"--");var v=(a+b)/2;return ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+v.toFixed(0));}
+  function fmtDelta(v){if(v===null)return ce("span",{style:{color:"#334155"}},"--");var a=Math.abs(v);var col=a<50?"#94a3b8":v>0?"#4ade80":"#f87171";return ce("span",{style:{color:col,fontWeight:a>=50?700:400}},(v>=0?"+":"")+v.toFixed(0));}
 
   var unit=calcPot;
   var gamesEntered=Object.keys(liveWinners).length;
@@ -665,6 +786,8 @@ function App(){
 
   if(!hydrated)return ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},"Loading...");
 
+  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"],["compare","⚖️ Compare"],["injuries","🏥 Injuries"]];
+
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap"}},
@@ -689,7 +812,7 @@ function App(){
       )
     ),
     ce("div",{style:{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",alignItems:"center",overflowX:"auto"}},
-      [["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"],["injuries","🏥 Injuries"]].map(function(pair){
+      tabBar.map(function(pair){
         return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",whiteSpace:"nowrap",
           background:tab===pair[0]?"#1e40af":"transparent",
           color:tab===pair[0]?"#fff":pair[0]==="live"&&(gamesEntered+ffEntered>0)?"#4ade80":"#94a3b8",
@@ -704,6 +827,7 @@ function App(){
     msg?ce("div",{style:{background:"#14532d",color:"#4ade80",padding:"8px 16px",fontSize:"11px",display:"flex",justifyContent:"space-between"}},
       ce("span",{},msg),ce("button",{onClick:function(){setMsg("");},style:{background:"none",border:"none",color:"#86efac",cursor:"pointer",fontSize:"16px"}},"×")):null,
 
+    // ── SETUP TAB ────────────────────────────────────────────────────────────
     tab==="setup"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"12px",fontWeight:700,color:"#60a5fa"}},"Load Ratings"),ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste name/kenpom/torvik from Google Sheet")),
@@ -730,6 +854,7 @@ function App(){
           ce("tbody",{},setupRows)))
     ):null,
 
+    // ── LIVE TAB ─────────────────────────────────────────────────────────────
     tab==="live"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"40px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -788,6 +913,7 @@ function App(){
       )
     ):null,
 
+    // ── WIN PROBS TAB ─────────────────────────────────────────────────────────
     tab==="results"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -811,6 +937,7 @@ function App(){
       )
     ):null,
 
+    // ── CALCUTTA TAB ──────────────────────────────────────────────────────────
     tab==="calcutta"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -819,10 +946,7 @@ function App(){
           ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7%")," of pot"),
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
           ce("div",{style:{marginLeft:"auto",display:"flex",gap:"8px",alignItems:"center"}},
-            ce("button",{
-              onClick:copyCalcuttaTable,
-              style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"11px",padding:"6px 12px"})
-            },"📋 Copy for Comparison"),
+            ce("button",{onClick:copyCalcuttaTable,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"11px",padding:"6px 12px"})},"📋 Export for Compare"),
             ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},
               ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"))
           )
@@ -841,6 +965,108 @@ function App(){
       )
     ):null,
 
+    // ── COMPARE TAB ───────────────────────────────────────────────────────────
+    tab==="compare"?ce("div",{style:{padding:"14px"}},
+      ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"12px"}},
+        ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"6px"}},"⚖️ Calcutta EV Comparison"),
+        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste EV data from two sources to compare. Source A auto-fills from your sim. Source B accepts the other app's format (Seed · Team · Region · Pot% · Value).")
+      ),
+      ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}},
+        ce("div",{style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"12px"}},
+          ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
+            ce("label",{style:{fontSize:"11px",fontWeight:700,color:"#60a5fa"}},"📊 Source A — Your Sim"),
+            ce("button",{onClick:autoFillA,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"10px",padding:"4px 10px"})},"⚡ Auto-fill from Sim")
+          ),
+          ce("textarea",{value:cmpA,onChange:function(ev){setCmpA(ev.target.value);},placeholder:"Click Auto-fill or paste Seed/Team/Region/Pot%/Value",style:{width:"100%",height:"130px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
+          ce("div",{style:{fontSize:"10px",color:"#475569",marginTop:"4px"}},parseCmpSource(cmpA).length?" ✓ "+parseCmpSource(cmpA).length+" teams parsed":"Accepts tab or comma-separated · headers optional")
+        ),
+        ce("div",{style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"12px"}},
+          ce("label",{style:{display:"block",fontSize:"11px",fontWeight:700,color:"#a78bfa",marginBottom:"6px"}},"📋 Source B — Other App"),
+          ce("textarea",{value:cmpB,onChange:function(ev){setCmpB(ev.target.value);},placeholder:"Paste other app's table here\n(Seed, Team, Region, Pot%, Value columns)",style:{width:"100%",height:"130px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
+          ce("div",{style:{fontSize:"10px",color:"#475569",marginTop:"4px"}},parseCmpSource(cmpB).length?" ✓ "+parseCmpSource(cmpB).length+" teams parsed":"Fuzzy name matching — St John's = St Johns etc.")
+        )
+      ),
+      ce("div",{style:{display:"flex",gap:"8px",alignItems:"center",marginBottom:"14px",flexWrap:"wrap"}},
+        ce("button",{onClick:runCompare,style:bSt({background:"#1d4ed8",color:"#fff"})},"⚡ Compare"),
+        ce("button",{onClick:function(){setCmpA("");setCmpB("");setCmpRows([]);setCmpDone(false);},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d"})},"Clear"),
+        cmpDone&&cmpStats?ce("span",{style:{fontSize:"11px",color:"#475569"}},cmpStats.matched+" matched · "+cmpStats.onlyA+" A-only · "+cmpStats.onlyB+" B-only"):null
+      ),
+      cmpDone&&cmpStats?ce("div",{style:{display:"flex",gap:"16px",flexWrap:"wrap",background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"10px 14px",marginBottom:"14px"}},
+        [
+          ["Matched",cmpStats.matched,"#f1f5f9"],
+          ["Avg Delta (B−A)",(cmpStats.avg>=0?"+":"")+"$"+Math.abs(cmpStats.avg).toFixed(0),cmpStats.avg>5?"#4ade80":cmpStats.avg<-5?"#f87171":"#94a3b8"],
+          ["Avg |Delta|","$"+cmpStats.avgAbs.toFixed(0),"#60a5fa"],
+          ["Biggest Gap","$"+cmpStats.maxAbs.toFixed(0)+" ("+cmpStats.maxRow.raw+")","#fb923c"],
+          ["Big Diffs >$200",cmpStats.bigCount,cmpStats.bigCount>5?"#f87171":"#fde68a"]
+        ].map(function(s){return ce("div",{key:s[0]},ce("div",{style:{fontSize:"17px",fontWeight:700,color:s[2]}},s[1]),ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},s[0]));})
+      ):null,
+      cmpDone?ce("div",{},
+        ce("div",{style:{display:"flex",gap:"8px",alignItems:"center",flexWrap:"wrap",marginBottom:"10px"}},
+          ce("input",{type:"text",placeholder:"Search team...",value:cmpSearch,onChange:function(ev){setCmpSearch(ev.target.value);},style:iSt({textAlign:"left",padding:"5px 10px",width:"130px"})}),
+          ce("select",{value:cmpFilter,onChange:function(ev){setCmpFilter(ev.target.value);},style:sSt({fontSize:"11px"})},
+            ce("option",{value:"all"},"All Teams"),
+            ce("option",{value:"matched"},"Matched Only"),
+            ce("option",{value:"big"},"Big Diff (>$200)"),
+            ce("option",{value:"onlyA"},"Only in A"),
+            ce("option",{value:"onlyB"},"Only in B")
+          ),
+          ce("select",{value:cmpSort,onChange:function(ev){setCmpSort(ev.target.value);},style:sSt({fontSize:"11px"})},
+            ce("option",{value:"seed"},"Sort: Seed"),
+            ce("option",{value:"evA"},"Sort: EV A"),
+            ce("option",{value:"evB"},"Sort: EV B"),
+            ce("option",{value:"avg"},"Sort: Avg"),
+            ce("option",{value:"delta"},"Sort: |Delta|"),
+            ce("option",{value:"name"},"Sort: Name")
+          ),
+          ce("select",{value:cmpDir,onChange:function(ev){setCmpDir(ev.target.value);},style:sSt({fontSize:"11px"})},
+            ce("option",{value:"asc"},"↑ Asc"),
+            ce("option",{value:"desc"},"↓ Desc")
+          ),
+          ce("div",{style:{display:"flex",gap:"10px",flexWrap:"wrap",fontSize:"10px",color:"#64748b",marginLeft:"4px"}},
+            ce("span",{},[ce("span",{style:{background:"rgba(22,101,52,0.2)",color:"#4ade80",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Agree")," <$50"]),
+            ce("span",{},[ce("span",{style:{background:"rgba(30,64,175,0.2)",color:"#93c5fd",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Close")," $50–200"]),
+            ce("span",{},[ce("span",{style:{background:"rgba(124,45,18,0.2)",color:"#fb923c",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Diff")," $200–500"]),
+            ce("span",{},[ce("span",{style:{background:"rgba(127,29,29,0.2)",color:"#f87171",borderRadius:"10px",padding:"1px 7px",fontSize:"9px",fontWeight:700}},"Big Diff")," >$500"])
+          )
+        ),
+        ce("div",{style:{overflowX:"auto"}},
+          ce("table",{},
+            ce("thead",{},ce("tr",{},
+              TH("Seed"),TH("Team"),TH("Region"),
+              TH("EV — Source A",{textAlign:"right",color:"#60a5fa"}),
+              TH("EV — Source B",{textAlign:"right",color:"#a78bfa"}),
+              TH("Avg A+B",{textAlign:"right",color:"#c084fc",borderLeft:"2px solid #334155"}),
+              TH("Delta (B−A)",{textAlign:"right"}),
+              TH("Agreement")
+            )),
+            ce("tbody",{},
+              cmpFiltered.length===0
+                ?ce("tr",{},ce("td",{colSpan:8,style:{textAlign:"center",padding:"40px",color:"#475569"}},"No rows match filter."))
+                :cmpFiltered.map(function(r){
+                  var delta=(r.evA!==null&&r.evB!==null)?r.evB-r.evA:null;
+                  var isUnmatched=r.evA===null||r.evB===null;
+                  return ce("tr",{key:r.name,style:{opacity:isUnmatched?0.5:1,background:delta!==null&&Math.abs(delta)>200?"rgba(124,45,18,0.05)":"transparent"}},
+                    TD(r.seed?ce("span",{style:{background:seedBg(r.seed),color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:700,fontSize:"10px"}},"#"+r.seed):""),
+                    TD(ce("span",{style:{fontWeight:600,whiteSpace:"nowrap"}},r.raw)),
+                    TD(ce("span",{style:{color:"#64748b",fontSize:"10px"}},r.region||"")),
+                    TD(fmtEV(r.evA,false),{textAlign:"right"}),
+                    TD(fmtEV(r.evB,false),{textAlign:"right"}),
+                    TD(fmtAvg(r.evA,r.evB),{textAlign:"right",borderLeft:"2px solid #334155"}),
+                    TD(fmtDelta(delta),{textAlign:"right"}),
+                    TD(cmpTag(r))
+                  );
+                })
+            )
+          )
+        )
+      ):ce("div",{style:{textAlign:"center",padding:"50px",color:"#475569"}},
+        ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"⚖️"),
+        ce("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"6px"}},"Paste data into both sources and click Compare"),
+        ce("div",{style:{fontSize:"11px"}},"Or use Auto-fill to load your sim's current Calcutta values into Source A")
+      )
+    ):null,
+
+    // ── INJURIES TAB ──────────────────────────────────────────────────────────
     tab==="injuries"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},
@@ -880,6 +1106,7 @@ function App(){
       ):null
     ):null,
 
+    // ── MODALS ────────────────────────────────────────────────────────────────
     pmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},
         ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Paste Ratings"),
@@ -906,6 +1133,15 @@ function App(){
           ce("button",{onClick:function(){setImO(false);setIt("");setIe("");},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),
           ce("button",{onClick:doImport,disabled:!it.trim(),style:bSt({background:it.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Apply")))):null,
 
+    calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
+      ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},
+        ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export"),
+        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all (Ctrl+A), copy, then paste into Source A on the Compare tab — or use Auto-fill directly."),
+        ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),
+        ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},
+          ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),
+          ce("button",{onClick:function(){setCalcExO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
+
     npmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"380px",width:"90%",border:"1px solid #334155"}},
         ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"10px"}},"New Profile"),
@@ -913,15 +1149,6 @@ function App(){
         ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end"}},
           ce("button",{onClick:function(){setNpmO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),
           ce("button",{onClick:createProfile,disabled:!npn.trim(),style:bSt({background:npn.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Create")))):null,
-
-    calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
-      ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},
-        ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export — Paste into Source A"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all text below (Ctrl+A / Cmd+A), copy, then paste into the Source A box in the comparison tool."),
-        ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),
-        ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},
-          ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),
-          ce("button",{onClick:function(){setCalcExO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
 
     dcO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"380px",width:"90%",border:"1px solid #7f1d1d"}},
