@@ -31,9 +31,8 @@ function mulberry32(seed){
     return((t^t>>>14)>>>0)/4294967296;
   };
 }
-
 function b2pd(b){var p=Math.max(0.001,Math.min(0.999,b));return Math.log(p/(1-p))/0.163;}
-function blendR(t,w){return(1-w)*t.kenpom+w*b2pd(t.torvik)+(t.adj||0);}
+function blendR(t,w){return(1-w)*t.kenpom+w*b2pd(t.torvik)+(t.adj||0)+(t.adjInj||0);}
 function sp2wp(s){return 1/(1+Math.exp(-0.163*(-s)));}
 
 var REGIONS=["South","East","West","Midwest"];
@@ -43,7 +42,6 @@ var S16_PAIRS=[[0,1],[2,3]];
 var ROUNDS=["R64","R32","S16","E8","F4","NCG","Champion"];
 var RPAY={R64:0.0094,R32:0.015,S16:0.020,E8:0.030,F4:0.045,NCG:0.070,Champion:0};
 
-// First Four play-in games
 var FIRST_FOUR=[
   {id:"FF1",teamA:{name:"UMBC",kenpom:-2.84,torvik:0.4449},teamB:{name:"Howard",kenpom:-3.01,torvik:0.4359},slotId:50,label:"Midwest 16 · Winner plays Michigan"},
   {id:"FF2",teamA:{name:"Texas",kenpom:19.03,torvik:0.8538},teamB:{name:"NC State",kenpom:19.60,torvik:0.8763},slotId:42,label:"West 11 · Winner plays BYU"},
@@ -51,10 +49,37 @@ var FIRST_FOUR=[
   {id:"FF4",teamA:{name:"Miami OH",kenpom:8.26,torvik:0.7177},teamB:{name:"SMU",kenpom:18.09,torvik:0.8611},slotId:58,label:"Midwest 11 · Winner plays Tennessee"}
 ];
 
+// Known 2026 tournament injuries
+var INJURY_DATA=[
+  {team:"Duke",severity:"High",injuries:[
+    {player:"Caleb Foster",status:"Questionable",detail:"Foot injury, missed ACC Tournament games. Key guard averaging 12 PPG."},
+    {player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice. Backup big man."}
+  ]},
+  {team:"Michigan",severity:"Medium",injuries:[
+    {player:"L.J. Cason",status:"Questionable",detail:"Hand injury suffered late in Big Ten Tournament. Starting guard averaging 14 PPG."}
+  ]},
+  {team:"Gonzaga",severity:"High",injuries:[
+    {player:"Braden Huff",status:"Out",detail:"Knee injury, out since mid-January. Coach Few confirmed OUT this weekend. Gonzaga 9 pts worse per game without him."}
+  ]},
+  {team:"Louisville",severity:"Medium",injuries:[
+    {player:"Mikel Brown Jr.",status:"Questionable",detail:"Lower body injury, limited practice. Key to Louisville upset potential."}
+  ]},
+  {team:"UCLA",severity:"Low",injuries:[
+    {player:"Tyler Bilodeau",status:"Day-to-Day",detail:"Health issues limiting minutes all season. Expected to play but may not be full strength."}
+  ]},
+  {team:"North Carolina",severity:"Medium",injuries:[
+    {player:"Roster depth",status:"Questionable",detail:"Availability concerns throughout season. Team grades closer to 8/9 seed level per metrics."}
+  ]},
+  {team:"Florida",severity:"Low",injuries:[
+    {player:"Walter Clayton Jr.",status:"Day-to-Day",detail:"Minor ankle issue, expected to play."}
+  ]},
+  {team:"St. Johns",severity:"Low",injuries:[
+    {player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness after Big East Tournament. Expected available."}
+  ]}
+];
+
 function runSim(teams,N,blendW,liveWinners){
-  var rng=mulberry32(20250316);
-  var STD=11.2;
-  var lw=liveWinners||{};
+  var rng=mulberry32(20250316),STD=11.2,lw=liveWinners||{};
   var byId={},baseRat={};
   for(var i=0;i<teams.length;i++){byId[teams[i].id]=teams[i];baseRat[teams[i].id]=blendR(teams[i],blendW);}
   var wins={};
@@ -80,48 +105,38 @@ function runSim(teams,N,blendW,liveWinners){
       for(var mi=0;mi<R64_PAIRS.length;mi++){
         var t1=bySeed[R64_PAIRS[mi][0]],t2=bySeed[R64_PAIRS[mi][1]];
         if(!t1||!t2){r64w.push(null);continue;}
-        var gk=reg+"_R64_"+mi;
-        var wid=playGame(t1.id,t2.id,gk,rat);
+        var gk=reg+"_R64_"+mi,wid=playGame(t1.id,t2.id,gk,rat);
         wins[wid].R64++;r64w.push(byId[wid]);
       }
       var r32w=[];
       for(var pi=0;pi<R32_PAIRS.length;pi++){
         var a=r64w[R32_PAIRS[pi][0]],b=r64w[R32_PAIRS[pi][1]];
         if(!a||!b){r32w.push(null);continue;}
-        var gk=reg+"_R32_"+pi;
-        var wid=playGame(a.id,b.id,gk,rat);
+        var gk=reg+"_R32_"+pi,wid=playGame(a.id,b.id,gk,rat);
         wins[wid].R32++;r32w.push(byId[wid]);
       }
       var s16w=[];
       for(var pi=0;pi<S16_PAIRS.length;pi++){
         var a=r32w[S16_PAIRS[pi][0]],b=r32w[S16_PAIRS[pi][1]];
         if(!a||!b){s16w.push(null);continue;}
-        var gk=reg+"_S16_"+pi;
-        var wid=playGame(a.id,b.id,gk,rat);
+        var gk=reg+"_S16_"+pi,wid=playGame(a.id,b.id,gk,rat);
         wins[wid].S16++;s16w.push(byId[wid]);
       }
       var a=s16w[0],b=s16w[1];
       if(!a||!b){regWinners.push(null);continue;}
-      var gk=reg+"_E8_0";
-      var wid=playGame(a.id,b.id,gk,rat);
+      var gk=reg+"_E8_0",wid=playGame(a.id,b.id,gk,rat);
       wins[wid].E8++;regWinners.push(byId[wid]);
     }
-    var f4w=[];
-    var F4_PAIRS=[[0,1],[2,3]];
+    var f4w=[],F4_PAIRS=[[0,1],[2,3]];
     for(var pi=0;pi<F4_PAIRS.length;pi++){
       var a=regWinners[F4_PAIRS[pi][0]],b=regWinners[F4_PAIRS[pi][1]];
       if(!a||!b){f4w.push(null);continue;}
-      var gk="F4_"+pi;
-      var wid=playGame(a.id,b.id,gk,rat);
-      wins[a.id].F4++;wins[b.id].F4++;
-      f4w.push(byId[wid]);
+      var gk="F4_"+pi,wid=playGame(a.id,b.id,gk,rat);
+      wins[wid].F4++;f4w.push(byId[wid]);
     }
-    var a=f4w[0],b=f4w[1];
-    if(!a||!b)continue;
+    var a=f4w[0],b=f4w[1];if(!a||!b)continue;
     var wid=playGame(a.id,b.id,"NCG_0",rat);
-    var lid=wid===a.id?b.id:a.id;
-    wins[wid].NCG++;wins[lid].NCG++;
-    wins[wid].Champion++;
+    wins[wid].NCG++;wins[wid].Champion++;
   }
   var probs={};
   for(var i=0;i<teams.length;i++){
@@ -131,7 +146,6 @@ function runSim(teams,N,blendW,liveWinners){
   return probs;
 }
 
-// Sheet adjustments (Jason's manual inputs from the sheet)
 var JASON_SHEET_ADJ={
   "Duke":2.0,"Michigan":1.5,"Houston":1.5,"Illinois":1.0,"Iowa State":1.0,
   "St Marys":1.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
@@ -140,120 +154,97 @@ var JASON_SHEET_ADJ={
   "Utah St":-1.0,"Vanderbilt":-1.0,"Louisville":-1.0,
   "Iowa":-0.5,"VCU":-0.5,"North Carolina":-0.5
 };
-// Claude adjustments — blend of madness sheet analysis + bracket guide data
 var CLAUDE_ADJ={
-  "Duke":0.5,           // guide -1.5 overvaluation offsets madness sheet +2.0
-  "Michigan":1.5,       // madness sheet
-  "Houston":2.0,        // madness sheet +1.5 + guide home court Sweet 16
-  "Illinois":2.5,       // madness sheet +1.0 + guide massive undervaluation
-  "Iowa State":1.0,     // madness sheet
-  "St Marys":1.0,       // madness sheet
-  "St. Johns":2.0,      // guide underseeded, value at every round
-  "Virginia":0.5,       // madness sheet
-  "Tennessee":0.5,      // madness sheet
-  "Gonzaga":0.5,        // madness sheet (Huff injury tempers this)
-  "Vanderbilt":0.5,     // guide underseeded, net of madness sheet -1.0 trending down
-  "UCLA":1.0,           // guide dangerous 7 seed, best recent form
-  "Louisville":1.0,     // guide undervalued at every round
-  "Missouri":0.5,       // guide coin flip, public overrating Miami
-  "VCU":0.5,            // guide 43% win prob vs UNC, only picked 28%
-  "Georgia":-2.0,       // madness sheet red flag DE
-  "TCU":-1.5,           // madness sheet red flag OE
-  "Santa Clara":-1.5,   // madness sheet red flag DE trending down
-  "MiamiOH/SMU":-1.5,  // madness sheet red flag
-  "UCF":-1.0,           // madness sheet red flag DE
-  "Nebraska":-1.0,      // madness sheet 0-8 R1 record
-  "North Carolina":-1.5,// guide grades as 8/9 seed + madness sheet
-  "Iowa":-0.5,          // madness sheet trending down
-  "Kansas":-0.5,        // guide public overrating vs St Johns
-  "Villanova":-0.5,     // guide public overrating vs Utah State
-  "Utah St":-0.5        // madness sheet -1.0, guide slight value +0.5 = net -0.5
+  "Duke":0.5,"Michigan":1.5,"Houston":2.0,"Illinois":2.5,"Iowa State":1.0,
+  "St Marys":1.0,"St. Johns":2.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
+  "Vanderbilt":0.5,"UCLA":1.0,"Louisville":1.0,"Missouri":0.5,"VCU":0.5,
+  "Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,
+  "UCF":-1.0,"Nebraska":-1.0,"North Carolina":-1.5,
+  "Iowa":-0.5,"Kansas":-0.5,"Villanova":-0.5,"Utah St":-0.5
 };
 
 function applyJasonAdj(teams){
   return teams.map(function(t){
-    var sheet=JASON_SHEET_ADJ[t.name]||0;
-    var claude=CLAUDE_ADJ[t.name]||0;
-    var blended=(sheet+claude)/2;
-    return Object.assign({},t,{adjSheet:sheet,adjClaude:claude,adj:blended});
+    var s=JASON_SHEET_ADJ[t.name]||0,c=CLAUDE_ADJ[t.name]||0;
+    return Object.assign({},t,{adjSheet:s,adjClaude:c,adj:(s+c)/2});
   });
 }
 
 var DEFAULT_TEAMS=[
-{id:1, name:"Florida",       seed:1,  region:"South",  kenpom:33.79, torvik:0.9732},
-{id:2, name:"PV/Lehigh",     seed:16, region:"South",  kenpom:-2.10, torvik:0.4600},
-{id:3, name:"Clemson",       seed:8,  region:"South",  kenpom:19.24, torvik:0.8923},
-{id:4, name:"Iowa",          seed:9,  region:"South",  kenpom:22.44, torvik:0.9069},
-{id:5, name:"Vanderbilt",    seed:5,  region:"South",  kenpom:27.51, torvik:0.9461},
-{id:6, name:"McNeese",       seed:12, region:"South",  kenpom:12.48, torvik:0.7644},
-{id:7, name:"Nebraska",      seed:4,  region:"South",  kenpom:26.16, torvik:0.9310},
-{id:8, name:"Troy",          seed:13, region:"South",  kenpom:1.73,  torvik:0.5362},
-{id:9, name:"North Carolina",seed:6,  region:"South",  kenpom:20.84, torvik:0.9030},
-{id:10,name:"VCU",           seed:11, region:"South",  kenpom:17.21, torvik:0.8430},
-{id:11,name:"Illinois",      seed:3,  region:"South",  kenpom:32.10, torvik:0.9676},
-{id:12,name:"Penn",          seed:14, region:"South",  kenpom:1.47,  torvik:0.5315},
-{id:13,name:"St Marys",      seed:7,  region:"South",  kenpom:23.07, torvik:0.9105},
-{id:14,name:"Texas A&M",     seed:10, region:"South",  kenpom:18.67, torvik:0.8726},
-{id:15,name:"Houston",       seed:2,  region:"South",  kenpom:33.43, torvik:0.9709},
-{id:16,name:"Idaho",         seed:15, region:"South",  kenpom:1.53,  torvik:0.5703},
-{id:17,name:"Duke",          seed:1,  region:"East",   kenpom:38.90, torvik:0.9813},
-{id:18,name:"Siena",         seed:16, region:"East",   kenpom:-2.68, torvik:0.4436},
-{id:19,name:"Ohio State",    seed:8,  region:"East",   kenpom:22.24, torvik:0.9171},
-{id:20,name:"TCU",           seed:9,  region:"East",   kenpom:17.59, torvik:0.8366},
-{id:21,name:"St. Johns",     seed:5,  region:"East",   kenpom:25.91, torvik:0.9415},
-{id:22,name:"Northern Iowa", seed:12, region:"East",   kenpom:11.81, torvik:0.7745},
-{id:23,name:"Kansas",        seed:4,  region:"East",   kenpom:24.44, torvik:0.9279},
-{id:24,name:"Cal Baptist",   seed:13, region:"East",   kenpom:5.99,  torvik:0.6889},
-{id:25,name:"Louisville",    seed:6,  region:"East",   kenpom:25.42, torvik:0.9364},
-{id:26,name:"South Florida", seed:11, region:"East",   kenpom:16.39, torvik:0.8353},
-{id:27,name:"Michigan St",   seed:3,  region:"East",   kenpom:28.31, torvik:0.9437},
-{id:28,name:"North Dakota St",seed:14,region:"East",   kenpom:5.14,  torvik:0.6401},
-{id:29,name:"UCLA",          seed:7,  region:"East",   kenpom:21.67, torvik:0.9106},
-{id:30,name:"UCF",           seed:10, region:"East",   kenpom:15.04, torvik:0.8117},
-{id:31,name:"UConn",         seed:2,  region:"East",   kenpom:27.87, torvik:0.9518},
-{id:32,name:"Furman",        seed:15, region:"East",   kenpom:-1.90, torvik:0.5017},
-{id:33,name:"Arizona",       seed:1,  region:"West",   kenpom:37.66, torvik:0.9776},
-{id:34,name:"Long Island",   seed:16, region:"West",   kenpom:-4.07, torvik:0.3492},
-{id:35,name:"Villanova",     seed:8,  region:"West",   kenpom:19.97, torvik:0.8805},
-{id:36,name:"Utah St",       seed:9,  region:"West",   kenpom:20.76, torvik:0.8953},
-{id:37,name:"Wisconsin",     seed:5,  region:"West",   kenpom:23.39, torvik:0.9294},
-{id:38,name:"High Point",    seed:12, region:"West",   kenpom:8.48,  torvik:0.6991},
-{id:39,name:"Arkansas",      seed:4,  region:"West",   kenpom:26.05, torvik:0.9337},
-{id:40,name:"Hawaii",        seed:13, region:"West",   kenpom:5.97,  torvik:0.6355},
-{id:41,name:"BYU",           seed:6,  region:"West",   kenpom:23.25, torvik:0.8865},
-{id:42,name:"TX/NC State",   seed:11, region:"West",   kenpom:19.30, torvik:0.8650},
-{id:43,name:"Gonzaga",       seed:3,  region:"West",   kenpom:28.10, torvik:0.9445},
-{id:44,name:"Kennesaw St",   seed:14, region:"West",   kenpom:0.57,  torvik:0.5000},
-{id:45,name:"Miami",         seed:7,  region:"West",   kenpom:20.68, torvik:0.8843},
-{id:46,name:"Missouri",      seed:10, region:"West",   kenpom:15.39, torvik:0.8515},
-{id:47,name:"Purdue",        seed:2,  region:"West",   kenpom:31.20, torvik:0.9636},
-{id:48,name:"Queens",        seed:15, region:"West",   kenpom:-1.49, torvik:0.4406},
-{id:49,name:"Michigan",      seed:1,  region:"Midwest", kenpom:37.59, torvik:0.9799},
-{id:50,name:"UMBC/Howard",   seed:16, region:"Midwest", kenpom:-2.93, torvik:0.4400},
-{id:51,name:"Georgia",       seed:8,  region:"Midwest", kenpom:20.48, torvik:0.8776},
-{id:52,name:"Saint Louis",   seed:9,  region:"Midwest", kenpom:18.32, torvik:0.8579},
-{id:53,name:"Texas Tech",    seed:5,  region:"Midwest", kenpom:25.22, torvik:0.9439},
-{id:54,name:"Akron",         seed:12, region:"Midwest", kenpom:12.80, torvik:0.7726},
-{id:55,name:"Alabama",       seed:4,  region:"Midwest", kenpom:25.72, torvik:0.9344},
-{id:56,name:"Hofstra",       seed:13, region:"Midwest", kenpom:9.63,  torvik:0.7087},
-{id:57,name:"Tennessee",     seed:6,  region:"Midwest", kenpom:26.02, torvik:0.9408},
-{id:58,name:"MiamiOH/SMU",   seed:11, region:"Midwest", kenpom:18.09, torvik:0.8611},
-{id:59,name:"Virginia",      seed:3,  region:"Midwest", kenpom:26.71, torvik:0.9427},
-{id:60,name:"Wright St",     seed:14, region:"Midwest", kenpom:2.04,  torvik:0.5864},
-{id:61,name:"Kentucky",      seed:7,  region:"Midwest", kenpom:21.48, torvik:0.8900},
-{id:62,name:"Santa Clara",   seed:10, region:"Midwest", kenpom:19.40, torvik:0.8952},
-{id:63,name:"Iowa State",    seed:2,  region:"Midwest", kenpom:32.42, torvik:0.9655},
-{id:64,name:"Tennessee St",  seed:15, region:"Midwest", kenpom:-1.80, torvik:0.3997}
+{id:1,name:"Florida",seed:1,region:"South",kenpom:33.79,torvik:0.9732},
+{id:2,name:"PV/Lehigh",seed:16,region:"South",kenpom:-2.10,torvik:0.4600},
+{id:3,name:"Clemson",seed:8,region:"South",kenpom:19.24,torvik:0.8923},
+{id:4,name:"Iowa",seed:9,region:"South",kenpom:22.44,torvik:0.9069},
+{id:5,name:"Vanderbilt",seed:5,region:"South",kenpom:27.51,torvik:0.9461},
+{id:6,name:"McNeese",seed:12,region:"South",kenpom:12.48,torvik:0.7644},
+{id:7,name:"Nebraska",seed:4,region:"South",kenpom:26.16,torvik:0.9310},
+{id:8,name:"Troy",seed:13,region:"South",kenpom:1.73,torvik:0.5362},
+{id:9,name:"North Carolina",seed:6,region:"South",kenpom:20.84,torvik:0.9030},
+{id:10,name:"VCU",seed:11,region:"South",kenpom:17.21,torvik:0.8430},
+{id:11,name:"Illinois",seed:3,region:"South",kenpom:32.10,torvik:0.9676},
+{id:12,name:"Penn",seed:14,region:"South",kenpom:1.47,torvik:0.5315},
+{id:13,name:"St Marys",seed:7,region:"South",kenpom:23.07,torvik:0.9105},
+{id:14,name:"Texas A&M",seed:10,region:"South",kenpom:18.67,torvik:0.8726},
+{id:15,name:"Houston",seed:2,region:"South",kenpom:33.43,torvik:0.9709},
+{id:16,name:"Idaho",seed:15,region:"South",kenpom:1.53,torvik:0.5703},
+{id:17,name:"Duke",seed:1,region:"East",kenpom:38.90,torvik:0.9813},
+{id:18,name:"Siena",seed:16,region:"East",kenpom:-2.68,torvik:0.4436},
+{id:19,name:"Ohio State",seed:8,region:"East",kenpom:22.24,torvik:0.9171},
+{id:20,name:"TCU",seed:9,region:"East",kenpom:17.59,torvik:0.8366},
+{id:21,name:"St. Johns",seed:5,region:"East",kenpom:25.91,torvik:0.9415},
+{id:22,name:"Northern Iowa",seed:12,region:"East",kenpom:11.81,torvik:0.7745},
+{id:23,name:"Kansas",seed:4,region:"East",kenpom:24.44,torvik:0.9279},
+{id:24,name:"Cal Baptist",seed:13,region:"East",kenpom:5.99,torvik:0.6889},
+{id:25,name:"Louisville",seed:6,region:"East",kenpom:25.42,torvik:0.9364},
+{id:26,name:"South Florida",seed:11,region:"East",kenpom:16.39,torvik:0.8353},
+{id:27,name:"Michigan St",seed:3,region:"East",kenpom:28.31,torvik:0.9437},
+{id:28,name:"North Dakota St",seed:14,region:"East",kenpom:5.14,torvik:0.6401},
+{id:29,name:"UCLA",seed:7,region:"East",kenpom:21.67,torvik:0.9106},
+{id:30,name:"UCF",seed:10,region:"East",kenpom:15.04,torvik:0.8117},
+{id:31,name:"UConn",seed:2,region:"East",kenpom:27.87,torvik:0.9518},
+{id:32,name:"Furman",seed:15,region:"East",kenpom:-1.90,torvik:0.5017},
+{id:33,name:"Arizona",seed:1,region:"West",kenpom:37.66,torvik:0.9776},
+{id:34,name:"Long Island",seed:16,region:"West",kenpom:-4.07,torvik:0.3492},
+{id:35,name:"Villanova",seed:8,region:"West",kenpom:19.97,torvik:0.8805},
+{id:36,name:"Utah St",seed:9,region:"West",kenpom:20.76,torvik:0.8953},
+{id:37,name:"Wisconsin",seed:5,region:"West",kenpom:23.39,torvik:0.9294},
+{id:38,name:"High Point",seed:12,region:"West",kenpom:8.48,torvik:0.6991},
+{id:39,name:"Arkansas",seed:4,region:"West",kenpom:26.05,torvik:0.9337},
+{id:40,name:"Hawaii",seed:13,region:"West",kenpom:5.97,torvik:0.6355},
+{id:41,name:"BYU",seed:6,region:"West",kenpom:23.25,torvik:0.8865},
+{id:42,name:"TX/NC State",seed:11,region:"West",kenpom:19.30,torvik:0.8650},
+{id:43,name:"Gonzaga",seed:3,region:"West",kenpom:28.10,torvik:0.9445},
+{id:44,name:"Kennesaw St",seed:14,region:"West",kenpom:0.57,torvik:0.5000},
+{id:45,name:"Miami",seed:7,region:"West",kenpom:20.68,torvik:0.8843},
+{id:46,name:"Missouri",seed:10,region:"West",kenpom:15.39,torvik:0.8515},
+{id:47,name:"Purdue",seed:2,region:"West",kenpom:31.20,torvik:0.9636},
+{id:48,name:"Queens",seed:15,region:"West",kenpom:-1.49,torvik:0.4406},
+{id:49,name:"Michigan",seed:1,region:"Midwest",kenpom:37.59,torvik:0.9799},
+{id:50,name:"UMBC/Howard",seed:16,region:"Midwest",kenpom:-2.93,torvik:0.4400},
+{id:51,name:"Georgia",seed:8,region:"Midwest",kenpom:20.48,torvik:0.8776},
+{id:52,name:"Saint Louis",seed:9,region:"Midwest",kenpom:18.32,torvik:0.8579},
+{id:53,name:"Texas Tech",seed:5,region:"Midwest",kenpom:25.22,torvik:0.9439},
+{id:54,name:"Akron",seed:12,region:"Midwest",kenpom:12.80,torvik:0.7726},
+{id:55,name:"Alabama",seed:4,region:"Midwest",kenpom:25.72,torvik:0.9344},
+{id:56,name:"Hofstra",seed:13,region:"Midwest",kenpom:9.63,torvik:0.7087},
+{id:57,name:"Tennessee",seed:6,region:"Midwest",kenpom:26.02,torvik:0.9408},
+{id:58,name:"MiamiOH/SMU",seed:11,region:"Midwest",kenpom:18.09,torvik:0.8611},
+{id:59,name:"Virginia",seed:3,region:"Midwest",kenpom:26.71,torvik:0.9427},
+{id:60,name:"Wright St",seed:14,region:"Midwest",kenpom:2.04,torvik:0.5864},
+{id:61,name:"Kentucky",seed:7,region:"Midwest",kenpom:21.48,torvik:0.8900},
+{id:62,name:"Santa Clara",seed:10,region:"Midwest",kenpom:19.40,torvik:0.8952},
+{id:63,name:"Iowa State",seed:2,region:"Midwest",kenpom:32.42,torvik:0.9655},
+{id:64,name:"Tennessee St",seed:15,region:"Midwest",kenpom:-1.80,torvik:0.3997}
 ];
 
 var ALIASES={
   "connecticut":"uconn","texas a&m":"texas am","ole miss":"mississippi",
-  "nc state":"nc state","north carolina state":"nc state","saint johns":"st johns",
-  "st johns":"st johns","uconn":"uconn","byu":"byu","smu":"smu",
-  "florida state":"florida st","ohio state":"ohio st","michigan state":"michigan st",
-  "penn state":"penn st","iowa state":"iowa st","san diego state":"san diego st",
-  "colorado state":"colorado st","utah state":"utah st","mcneese state":"mcneese st",
-  "saint marys":"saint marys","st marys":"saint marys","vcu":"vcu","unc":"north carolina"
+  "nc state":"nc state","saint johns":"st johns","st johns":"st johns",
+  "uconn":"uconn","byu":"byu","smu":"smu","florida state":"florida st",
+  "ohio state":"ohio st","michigan state":"michigan st","penn state":"penn st",
+  "iowa state":"iowa st","san diego state":"san diego st","colorado state":"colorado st",
+  "utah state":"utah st","mcneese state":"mcneese st","saint marys":"saint marys",
+  "st marys":"saint marys","vcu":"vcu","unc":"north carolina"
 };
 function norm(s){
   var o="";s=(s||"").toLowerCase();
@@ -274,7 +265,6 @@ function parseRatings(txt){
     if(n&&!isNaN(k)&&!isNaN(t))map[norm(n)]={kenpom:k,torvik:t};
   });return map;
 }
-
 function lsGet(k){try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
@@ -341,6 +331,8 @@ function App(){
   var _it=useState(""),it=_it[0],setIt=_it[1];
   var _ie=useState(""),ie=_ie[0],setIe=_ie[1];
   var _hy=useState(false),hydrated=_hy[0],setHydrated=_hy[1];
+  var _injData=useState(null),injData=_injData[0],setInjData=_injData[1];
+  var _injLoading=useState(false),injLoading=_injLoading[0],setInjLoading=_injLoading[1];
   var saveTimer=useRef(null);
   var latestRef=useRef({});
 
@@ -370,9 +362,7 @@ function App(){
     if(saveTimer.current)clearTimeout(saveTimer.current);
     saveTimer.current=setTimeout(function(){
       var s=latestRef.current;
-      saveProfile(active,{teams:s.teams,simResults:s.simResults,numSims:s.numSims,blendW:s.blendW,
-        lines:s.lines,liveWinners:s.liveWinners,ffWinners:s.ffWinners,
-        calcPrices:s.calcPrices,calcPot:s.calcPot,tab:s.tab});
+      saveProfile(active,{teams:s.teams,simResults:s.simResults,numSims:s.numSims,blendW:s.blendW,lines:s.lines,liveWinners:s.liveWinners,ffWinners:s.ffWinners,calcPrices:s.calcPrices,calcPot:s.calcPot,tab:s.tab});
     },1000);
   }
   useEffect(function(){if(hydrated)scheduleSave();},[teams,simResults,numSims,blendW,lines,liveWinners,ffWinners,calcPrices,calcPot,tab]);
@@ -383,15 +373,14 @@ function App(){
     if(d){
       var lt=d.teams||DEFAULT_TEAMS;
       if(name==="Jason")lt=applyJasonAdj(lt);
-      setTeams(lt);
-      setSimRes(d.simResults||null);
+      setTeams(lt);setSimRes(d.simResults||null);
       setNumSims(d.numSims||5000);setBlendW(d.blendW!=null?d.blendW:0.5);
       setLines(d.lines||{});setLiveWinners(d.liveWinners||{});
       setFfWinners(d.ffWinners||{});
       setCalcPrices(d.calcPrices||{});setCalcPot(d.calcPot||1000);setTab(d.tab||"setup");
     } else {
-      var fresh=name==="Jason"?applyJasonAdj(DEFAULT_TEAMS):DEFAULT_TEAMS.slice();
-      setTeams(fresh);setSimRes(null);setNumSims(5000);setBlendW(0.5);
+      setTeams(name==="Jason"?applyJasonAdj(DEFAULT_TEAMS):DEFAULT_TEAMS.slice());
+      setSimRes(null);setNumSims(5000);setBlendW(0.5);
       setLines({});setLiveWinners({});setFfWinners({});setCalcPrices({});setCalcPot(1000);setTab("setup");
     }
     setEditing(null);
@@ -407,26 +396,23 @@ function App(){
     lsDel(profileKey(active));setProfNames(nn);lsSet(namesKey(),nn);
     setDcO(false);switchProfile(nn[0]);
   }
-
   function doRunSim(andSwitch){
     setSimming(true);
-    var snapTeams=teams.slice(),snapBlend=blendW,snapN=numSims,snapLW=Object.assign({},liveWinners);
+    var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners);
     setTimeout(function(){
       var t0=performance.now();
-      var res=runSim(snapTeams,snapN,snapBlend,snapLW);
+      var res=runSim(snap,sn,sb,slw);
       setSimTime(((performance.now()-t0)/1000).toFixed(2));
       setSimRes(res);setSimming(false);
       if(andSwitch)setTab("results");
     },30);
   }
-
   var rerunTimer=useRef(null);
   useEffect(function(){
     if(!hydrated||!simResults)return;
     if(rerunTimer.current)clearTimeout(rerunTimer.current);
     rerunTimer.current=setTimeout(function(){
-      var res=runSim(teams,numSims,blendW,liveWinners);
-      setSimRes(res);
+      setSimRes(runSim(teams,numSims,blendW,liveWinners));
     },100);
     return function(){clearTimeout(rerunTimer.current);};
   },[liveWinners]);
@@ -434,37 +420,28 @@ function App(){
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
   function clearAllLW(){
-    setLiveWinners({});
-    setFfWinners({});
+    setLiveWinners({});setFfWinners({});
     var slotIds={50:true,42:true,2:true,58:true};
-    setTeams(function(prev){
-      return prev.map(function(t){
-        if(!slotIds[t.id])return t;
-        var orig=null;
-        for(var i=0;i<DEFAULT_TEAMS.length;i++){if(DEFAULT_TEAMS[i].id===t.id){orig=DEFAULT_TEAMS[i];break;}}
-        if(!orig)return t;
-        return Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
-      });
-    });
+    setTeams(function(prev){return prev.map(function(t){
+      if(!slotIds[t.id])return t;
+      var orig=null;for(var i=0;i<DEFAULT_TEAMS.length;i++){if(DEFAULT_TEAMS[i].id===t.id){orig=DEFAULT_TEAMS[i];break;}}
+      return orig?Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik}):t;
+    });});
   }
-
   function pickFFWinner(ff,side){
-    var winner=side==="A"?ff.teamA:ff.teamB;
+    var w=side==="A"?ff.teamA:ff.teamB;
     setFfWinners(function(p){return Object.assign({},p,{[ff.id]:side});});
     setTeams(function(prev){return prev.map(function(t){
-      if(t.id!==ff.slotId)return t;
-      return Object.assign({},t,{name:winner.name,kenpom:winner.kenpom,torvik:winner.torvik});
+      return t.id!==ff.slotId?t:Object.assign({},t,{name:w.name,kenpom:w.kenpom,torvik:w.torvik});
     });});
   }
   function clearFFWinner(ff){
     var orig=DEFAULT_TEAMS.filter(function(t){return t.id===ff.slotId;})[0];
     setFfWinners(function(p){var n=Object.assign({},p);delete n[ff.id];return n;});
-    setTeams(function(prev){return prev.map(function(t){
-      if(t.id!==ff.slotId)return t;
-      return Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
+    if(orig)setTeams(function(prev){return prev.map(function(t){
+      return t.id!==ff.slotId?t:Object.assign({},t,{name:orig.name,kenpom:orig.kenpom,torvik:orig.torvik});
     });});
   }
-
   function updTeam(id,field,val){
     setTeams(function(prev){return prev.map(function(t){
       if(t.id!==id)return t;
@@ -473,12 +450,12 @@ function App(){
       else if(field==="torvik")u.torvik=Math.min(0.999,Math.max(0,parseFloat(val)||0));
       else if(field==="adjSheet"){u.adjSheet=parseFloat(val)||0;u.adj=(u.adjSheet+(u.adjClaude||0))/2;}
       else if(field==="adjClaude"){u.adjClaude=parseFloat(val)||0;u.adj=((u.adjSheet||0)+u.adjClaude)/2;}
+      else if(field==="adjInj"){u.adjInj=parseFloat(val)||0;}
       else if(field==="seed")u.seed=parseInt(val)||t.seed;
       else u[field]=val;
       return u;
     });});
   }
-
   function applyPaste(){
     var map=parseRatings(pt);var matched=0,unmatched=[];
     setTeams(function(prev){return prev.map(function(t){
@@ -491,14 +468,13 @@ function App(){
     setTimeout(function(){setMsg("");},7000);
   }
   function resetDefaults(){
-    if(window.confirm("Reset all teams to defaults?")){
+    if(window.confirm("Reset all teams?")){
       setTeams(DEFAULT_TEAMS.slice());setLines({});setCalcPrices({});
       setSimRes(null);setLiveWinners({});setFfWinners({});
     }
   }
   function doExport(){
-    setEt(JSON.stringify({teams:teams,simResults:simResults,numSims:numSims,blendW:blendW,
-      lines:lines,liveWinners:liveWinners,ffWinners:ffWinners,calcPrices:calcPrices,calcPot:calcPot}));
+    setEt(JSON.stringify({teams:teams,simResults:simResults,numSims:numSims,blendW:blendW,lines:lines,liveWinners:liveWinners,ffWinners:ffWinners,calcPrices:calcPrices,calcPot:calcPot}));
     setEmO(true);
   }
   function doImport(){
@@ -512,6 +488,22 @@ function App(){
       setImO(false);setIt("");setIe("");
       setMsg("Imported.");setTimeout(function(){setMsg("");},3000);
     }catch(e){setIe("Invalid data.");}
+  }
+
+  function loadInjuries(){
+    setInjLoading(true);
+    setTimeout(function(){
+      var teamNames=teams.map(function(t){return t.name;});
+      var result=INJURY_DATA.filter(function(d){return teamNames.indexOf(d.team)>=0;});
+      var reported=result.map(function(d){return d.team;});
+      teams.forEach(function(t){
+        if(reported.indexOf(t.name)<0)result.push({team:t.name,severity:"None",injuries:[]});
+      });
+      var order={High:0,Medium:1,Low:2,None:3};
+      result.sort(function(a,b){return order[a.severity]-order[b.severity];});
+      setInjData({teams:result,timestamp:new Date().toLocaleString()});
+      setInjLoading(false);
+    },400);
   }
 
   var unit=calcPot;
@@ -623,7 +615,7 @@ function App(){
   }
 
   var setupRows=sortedTeams.map(function(team){
-    var adjS=team.adjSheet||0,adjC=team.adjClaude||0,adj=team.adj||0;
+    var adjS=team.adjSheet||0,adjC=team.adjClaude||0,adjI=team.adjInj||0,adj=team.adj||0;
     var bl=blendR(team,blendW),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
     return ce("tr",{key:team.id,onClick:function(){setEditing(isEdit?null:team.id);},style:{cursor:"pointer",background:isEdit?"#1e3a5f":"transparent"}},
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},team.region)),
@@ -631,11 +623,12 @@ function App(){
       TD(isEdit?ce("input",{value:team.name,onChange:function(ev){updTeam(team.id,"name",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"120px",textAlign:"left"})}):ce("span",{style:{fontWeight:600}},team.name)),
       TD(isEdit?ce("input",{type:"number",step:"0.1",value:team.kenpom,onChange:function(ev){updTeam(team.id,"kenpom",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"65px",border:"1px solid #60a5fa"})}):ce("span",{style:{color:"#60a5fa",fontWeight:600}},(team.kenpom>0?"+":"")+team.kenpom.toFixed(1))),
       TD(isEdit?ce("input",{type:"number",step:"0.001",min:"0",max:"1",value:team.torvik,onChange:function(ev){updTeam(team.id,"torvik",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"65px",border:"1px solid #a78bfa"})}):ce("span",{style:{color:"#a78bfa",fontWeight:600}},team.torvik.toFixed(3)),{borderLeft:"1px solid #1e293b"}),
-      TD(ce("input",{type:"number",step:"0.5",value:adjS===0?"":adjS,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjSheet",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"52px",border:"1px solid "+(adjS>0?"#f59e0b":adjS<0?"#f87171":"#334155"),color:adjS>0?"#f59e0b":adjS<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #1e293b"}),
-      TD(ce("input",{type:"number",step:"0.5",value:adjC===0?"":adjC,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjClaude",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"52px",border:"1px solid "+(adjC>0?"#818cf8":adjC<0?"#f87171":"#334155"),color:adjC>0?"#818cf8":adjC<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #334155"}),
+      TD(ce("input",{type:"number",step:"0.5",value:adjS===0?"":adjS,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjSheet",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"46px",border:"1px solid "+(adjS>0?"#f59e0b":adjS<0?"#f87171":"#334155"),color:adjS>0?"#f59e0b":adjS<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #1e293b"}),
+      TD(ce("input",{type:"number",step:"0.5",value:adjC===0?"":adjC,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjClaude",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"46px",border:"1px solid "+(adjC>0?"#818cf8":adjC<0?"#f87171":"#334155"),color:adjC>0?"#818cf8":adjC<0?"#f87171":"#94a3b8"})}),{borderLeft:"1px solid #334155"}),
+      TD(ce("input",{type:"number",step:"0.5",value:adjI===0?"":adjI,placeholder:"0",onChange:function(ev){updTeam(team.id,"adjInj",ev.target.value);},onClick:function(e){e.stopPropagation();},style:iSt({width:"46px",border:"1px solid "+(adjI>0?"#4ade80":adjI<0?"#ef4444":"#334155"),color:adjI>0?"#4ade80":adjI<0?"#ef4444":"#94a3b8"})}),{borderLeft:"1px solid #334155"}),
       TD([
         ce("span",{key:"v",style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:700}},(bl>0?"+":"")+bl.toFixed(1)),
-        adj!==0?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:adj>0?"#4ade80":"#f87171",fontWeight:700}},(adj>0?"↑":"↓")+Math.abs(adj).toFixed(1)):
+        (adj!==0||adjI!==0)?ce("span",{key:"a",style:{marginLeft:"4px",fontSize:"9px",color:(adj+adjI)>0?"#4ade80":"#f87171",fontWeight:700}},((adj+adjI)>0?"↑":"↓")+Math.abs(adj+adjI).toFixed(1)):
         dis>4?ce("span",{key:"s",style:{marginLeft:"5px",fontSize:"9px",color:"#fb923c"}},"split"):null
       ],{borderLeft:"1px solid #1e293b"}),
       TD(ce("span",{style:{color:"#475569",fontSize:"10px"}},isEdit?"done":"edit"))
@@ -722,7 +715,6 @@ function App(){
 
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
 
-    // ── HEADER ──
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap"}},
         ce("span",{style:{fontSize:"22px"}},"🏀"),
@@ -746,15 +738,14 @@ function App(){
       )
     ),
 
-    // ── TABS ──
-    ce("div",{style:{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",alignItems:"center"}},
-      [["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"]].map(function(pair){
-        return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",
+    ce("div",{style:{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",alignItems:"center",overflowX:"auto"}},
+      [["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"],["injuries","🏥 Injuries"]].map(function(pair){
+        return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",whiteSpace:"nowrap",
           background:tab===pair[0]?"#1e40af":"transparent",
           color:tab===pair[0]?"#fff":pair[0]==="live"&&(gamesEntered+ffEntered>0)?"#4ade80":"#94a3b8",
           borderBottom:tab===pair[0]?"2px solid #60a5fa":"2px solid transparent"})},pair[1]);
       }),
-      ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center",padding:"0 12px"}},
+      ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center",padding:"0 12px",flexShrink:0}},
         ce("select",{value:numSims,onChange:function(ev){setNumSims(parseInt(ev.target.value));},style:sSt({fontSize:"11px",padding:"4px 8px"})},
           ce("option",{value:1000},"1K"),ce("option",{value:5000},"5K"),ce("option",{value:10000},"10K"),ce("option",{value:25000},"25K")),
         ce("button",{onClick:function(){doRunSim(true);},disabled:simming,style:bSt({background:simming?"#334155":"#1d4ed8",color:"#fff",minWidth:"90px",cursor:simming?"not-allowed":"pointer"})},simming?"⏳ Running...":"▶ Run Sim")
@@ -764,7 +755,6 @@ function App(){
     msg?ce("div",{style:{background:"#14532d",color:"#4ade80",padding:"8px 16px",fontSize:"11px",display:"flex",justifyContent:"space-between"}},
       ce("span",{},msg),ce("button",{onClick:function(){setMsg("");},style:{background:"none",border:"none",color:"#86efac",cursor:"pointer",fontSize:"16px"}},"×")):null,
 
-    // ── SETUP TAB ──
     tab==="setup"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"12px",fontWeight:700,color:"#60a5fa"}},"Load Ratings"),ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste name/kenpom/torvik from Google Sheet")),
@@ -774,7 +764,7 @@ function App(){
         ce("button",{onClick:resetDefaults,style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d"})},"Reset")
       ),
       ce("div",{style:{background:"#1e293b",borderRadius:"7px",padding:"8px 12px",marginBottom:"10px",border:"1px solid #334155",fontSize:"10px",color:"#94a3b8"}},
-        ce("span",{style:{color:"#4ade80",fontWeight:700}},"Fixed bracket — no reseeding. "),"Click row to edit. First Four winners update automatically in Live tab."),
+        ce("span",{style:{color:"#4ade80",fontWeight:700}},"Fixed bracket — no reseeding. "),"Sheet & PG averaged → Blended. Inj applied directly on top."),
       ce("div",{style:{display:"flex",gap:"8px",marginBottom:"10px",flexWrap:"wrap",alignItems:"center"}},
         ce("input",{placeholder:"Search...",value:search,onChange:function(ev){setSearch(ev.target.value);},style:iSt({textAlign:"left",padding:"6px 10px",width:"130px"})}),
         ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},
@@ -782,11 +772,15 @@ function App(){
       ),
       ce("div",{style:{overflowX:"auto"}},
         ce("table",{},
-          ce("thead",{},ce("tr",{},TH("Region"),TH("Seed"),TH("Team"),TH("KenPom",{color:"#60a5fa"}),TH("Barthag",{color:"#a78bfa"}),TH("Sheet",{borderLeft:"1px solid #334155",color:"#f59e0b"}),TH("PG",{borderLeft:"1px solid #334155",color:"#818cf8"}),TH("Blended",{borderLeft:"1px solid #1e293b"}),TH(""))),
+          ce("thead",{},ce("tr",{},
+            TH("Region"),TH("Seed"),TH("Team"),TH("KenPom",{color:"#60a5fa"}),TH("Barthag",{color:"#a78bfa"}),
+            TH("Sheet",{borderLeft:"1px solid #334155",color:"#f59e0b"}),
+            TH("PG",{borderLeft:"1px solid #334155",color:"#818cf8"}),
+            TH("Inj",{borderLeft:"1px solid #334155",color:"#ef4444"}),
+            TH("Blended",{borderLeft:"1px solid #1e293b"}),TH(""))),
           ce("tbody",{},setupRows)))
     ):null,
 
-    // ── LIVE TAB ──
     tab==="live"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"40px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -795,8 +789,6 @@ function App(){
           simming?ce("span",{style:{fontSize:"10px",color:"#fb923c"}},"⏳ Updating..."):null,
           gamesEntered>0?ce("button",{onClick:clearAllLW,style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d",padding:"5px 12px",fontSize:"11px"})},"Clear All"):null
         ),
-
-        // First Four section
         ce("div",{style:{marginBottom:"16px",background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},
           ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},"🏀 First Four — Dayton, Ohio (Mar 17-18)"),
           ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:"10px"}},
@@ -805,7 +797,7 @@ function App(){
               return ce("div",{key:ff.id,style:{background:"#1e293b",borderRadius:"8px",padding:"10px",border:"1px solid "+(picked?"#166534":"#334155")}},
                 ce("div",{style:{fontSize:"9px",color:"#f59e0b",marginBottom:"6px",fontWeight:600}},ff.label),
                 ce("div",{style:{display:"flex",flexDirection:"column",gap:"3px"}},
-                  [["A",ff.teamA],["B",ff.teamB]].map(function(pair,idx){
+                  [["A",ff.teamA],["B",ff.teamB]].map(function(pair){
                     var side=pair[0],t=pair[1];
                     var isW=picked===side,isL=picked&&picked!==side;
                     var bl=((1-blendW)*t.kenpom+blendW*b2pd(t.torvik));
@@ -823,8 +815,6 @@ function App(){
             })
           )
         ),
-
-        // Main bracket
         ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(580px,1fr))",gap:"16px"}},
           bracketState.regions.map(function(reg){
             return ce("div",{key:reg.name,style:{background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},
@@ -849,7 +839,6 @@ function App(){
       )
     ):null,
 
-    // ── RESULTS TAB ──
     tab==="results"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -873,7 +862,6 @@ function App(){
       )
     ):null,
 
-    // ── CALCUTTA TAB ──
     tab==="calcutta"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -898,7 +886,45 @@ function App(){
       )
     ):null,
 
-    // ── MODALS ──
+    tab==="injuries"?ce("div",{style:{padding:"14px"}},
+      ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
+        ce("div",{style:{flex:1}},
+          ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa"}},"🏥 Tournament Injury Report"),
+          ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},"Known injuries entering the 2026 tournament. Use the Inj column in Setup to apply adjustments to the sim.")
+        ),
+        ce("button",{onClick:loadInjuries,disabled:injLoading,style:bSt({background:injLoading?"#334155":"#0e7490",color:"#fff",minWidth:"130px",cursor:injLoading?"not-allowed":"pointer"})},injLoading?"⏳ Loading...":"🔄 Load Report")
+      ),
+      !injData&&!injLoading?ce("div",{style:{textAlign:"center",padding:"60px",color:"#64748b"}},
+        ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"🏥"),
+        ce("div",{style:{fontSize:"14px",fontWeight:600,marginBottom:"6px"}},"Click Load Report to view injury data")
+      ):null,
+      injData?ce("div",{},
+        ce("div",{style:{fontSize:"10px",color:"#475569",marginBottom:"10px",textAlign:"right"}},"Last updated: "+injData.timestamp),
+        ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"10px"}},
+          injData.teams.map(function(t){
+            var sc=t.severity==="High"?"#f87171":t.severity==="Medium"?"#fb923c":t.severity==="Low"?"#fde68a":"#4ade80";
+            var sb=t.severity==="High"?"rgba(127,29,29,0.2)":t.severity==="Medium"?"rgba(124,45,18,0.2)":t.severity==="Low"?"rgba(113,63,18,0.15)":"rgba(22,101,52,0.1)";
+            return ce("div",{key:t.team,style:{background:"#1e293b",borderRadius:"8px",padding:"12px",border:"1px solid "+(t.severity==="None"?"#1e293b":"#334155")}},
+              ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:t.injuries.length?"8px":"0"}},
+                ce("div",{style:{fontWeight:700,fontSize:"12px"}},t.team),
+                ce("span",{style:{fontSize:"9px",fontWeight:700,color:sc,background:sb,padding:"2px 7px",borderRadius:"10px"}},t.severity==="None"?"✓ Healthy":t.severity)
+              ),
+              t.injuries.map(function(inj,i){
+                var ic=inj.status==="Out"?"#f87171":inj.status==="Doubtful"?"#fb923c":inj.status==="Questionable"?"#fde68a":"#94a3b8";
+                return ce("div",{key:i,style:{background:"#0f172a",borderRadius:"5px",padding:"6px 8px",marginTop:"4px"}},
+                  ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}},
+                    ce("span",{style:{fontWeight:600,fontSize:"11px"}},inj.player),
+                    ce("span",{style:{fontSize:"9px",color:ic,fontWeight:700}},inj.status)
+                  ),
+                  ce("div",{style:{fontSize:"10px",color:"#94a3b8"}},inj.detail)
+                );
+              })
+            );
+          })
+        )
+      ):null
+    ):null,
+
     pmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},
         ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Paste Ratings"),
@@ -942,7 +968,6 @@ function App(){
           ce("button",{onClick:deleteProfile,style:bSt({background:"#7f1d1d",color:"#fca5a5"})},"Delete")))):null
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
 })();
 </script>
