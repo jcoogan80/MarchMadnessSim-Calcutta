@@ -995,6 +995,23 @@ function App(){
           ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7%")," of pot"),
           hasBlend?ce("span",{style:{fontSize:"10px",color:"#e879f9",fontWeight:600}},"✦ Blend values active — "+Object.keys(blendMap).length+" teams"):
             ce("span",{style:{fontSize:"10px",color:"#475569"}},"Go to Compare tab to activate Blend % columns"),
+          hasBlend?function(){
+            // Estimate pot: for each team with a bid AND a blendPct, pot_est = bid / blendPct
+            var pts=[];
+            teams.forEach(function(t){
+              var bid=parseFloat(calcPrices[t.id])||0;
+              var bEntry=blendMap[cmpNorm(t.name)];
+              if(bid>0&&bEntry&&bEntry.blendPct>0)pts.push(bid/bEntry.blendPct);
+            });
+            if(!pts.length)return ce("span",{style:{fontSize:"10px",color:"#475569"}},"Enter bids to estimate pot");
+            var est=pts.reduce(function(s,v){return s+v;},0)/pts.length;
+            var lo=Math.min.apply(null,pts),hi=Math.max.apply(null,pts);
+            return ce("div",{style:{background:"rgba(88,28,135,0.25)",border:"1px solid #7c3aed",borderRadius:"6px",padding:"4px 10px",display:"flex",gap:"10px",alignItems:"center"}},
+              ce("span",{style:{fontSize:"10px",color:"#a78bfa",fontWeight:700}},"🎯 Est. Pot:"),
+              ce("span",{style:{fontSize:"13px",color:"#e879f9",fontWeight:700}},"$"+Math.round(est).toLocaleString()),
+              ce("span",{style:{fontSize:"9px",color:"#7c3aed"}},"("+pts.length+" data pts · range $"+Math.round(lo).toLocaleString()+"–$"+Math.round(hi).toLocaleString()+")")
+            );
+          }():null,
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
           ce("div",{style:{marginLeft:"auto",display:"flex",gap:"8px",alignItems:"center"}},
             ce("button",{onClick:copyCalcuttaTable,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166634",fontSize:"11px",padding:"6px 12px"})},"📋 Export for Compare"),
