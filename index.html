@@ -50,31 +50,14 @@ var FIRST_FOUR=[
 ];
 
 var INJURY_DATA=[
-  {team:"Duke",severity:"High",injuries:[
-    {player:"Caleb Foster",status:"Questionable",detail:"Foot injury, missed ACC Tournament games. Key guard averaging 12 PPG."},
-    {player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice."}
-  ]},
-  {team:"Michigan",severity:"Medium",injuries:[
-    {player:"L.J. Cason",status:"Questionable",detail:"Hand injury suffered late in Big Ten Tournament. Starting guard averaging 14 PPG."}
-  ]},
-  {team:"Gonzaga",severity:"High",injuries:[
-    {player:"Braden Huff",status:"Out",detail:"Knee injury, out since mid-January. Confirmed OUT this weekend. Gonzaga 9 pts worse per game without him."}
-  ]},
-  {team:"Louisville",severity:"Medium",injuries:[
-    {player:"Mikel Brown Jr.",status:"Questionable",detail:"Lower body injury, limited practice. Key to Louisville upset potential."}
-  ]},
-  {team:"UCLA",severity:"Low",injuries:[
-    {player:"Tyler Bilodeau",status:"Day-to-Day",detail:"Health issues limiting minutes all season. Expected to play but may not be full strength."}
-  ]},
-  {team:"North Carolina",severity:"Medium",injuries:[
-    {player:"Roster depth",status:"Questionable",detail:"Availability concerns throughout season. Team grades closer to 8/9 seed level per metrics."}
-  ]},
-  {team:"Florida",severity:"Low",injuries:[
-    {player:"Walter Clayton Jr.",status:"Day-to-Day",detail:"Minor ankle issue, expected to play."}
-  ]},
-  {team:"St. Johns",severity:"Low",injuries:[
-    {player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness after Big East Tournament. Expected available."}
-  ]}
+  {team:"Duke",severity:"High",injuries:[{player:"Caleb Foster",status:"Questionable",detail:"Foot injury, missed ACC Tournament games. Key guard averaging 12 PPG."},{player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice."}]},
+  {team:"Michigan",severity:"Medium",injuries:[{player:"L.J. Cason",status:"Questionable",detail:"Hand injury suffered late in Big Ten Tournament. Starting guard averaging 14 PPG."}]},
+  {team:"Gonzaga",severity:"High",injuries:[{player:"Braden Huff",status:"Out",detail:"Knee injury, out since mid-January. Confirmed OUT this weekend. Gonzaga 9 pts worse per game without him."}]},
+  {team:"Louisville",severity:"Medium",injuries:[{player:"Mikel Brown Jr.",status:"Questionable",detail:"Lower body injury, limited practice. Key to Louisville upset potential."}]},
+  {team:"UCLA",severity:"Low",injuries:[{player:"Tyler Bilodeau",status:"Day-to-Day",detail:"Health issues limiting minutes all season. Expected to play but may not be full strength."}]},
+  {team:"North Carolina",severity:"Medium",injuries:[{player:"Roster depth",status:"Questionable",detail:"Availability concerns throughout season. Team grades closer to 8/9 seed level per metrics."}]},
+  {team:"Florida",severity:"Low",injuries:[{player:"Walter Clayton Jr.",status:"Day-to-Day",detail:"Minor ankle issue, expected to play."}]},
+  {team:"St. Johns",severity:"Low",injuries:[{player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness after Big East Tournament. Expected available."}]}
 ];
 
 function runSim(teams,N,blendW,liveWinners){
@@ -145,22 +128,8 @@ function runSim(teams,N,blendW,liveWinners){
   return probs;
 }
 
-var JASON_SHEET_ADJ={
-  "Duke":2.0,"Michigan":1.5,"Houston":1.5,"Illinois":1.0,"Iowa State":1.0,
-  "St Marys":1.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
-  "Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,
-  "Missouri":-1.0,"UCF":-1.0,"Nebraska":-1.0,"St. Johns":-1.0,
-  "Utah St":-1.0,"Vanderbilt":-1.0,"Louisville":-1.0,
-  "Iowa":-0.5,"VCU":-0.5,"North Carolina":-0.5
-};
-var CLAUDE_ADJ={
-  "Duke":0.5,"Michigan":1.5,"Houston":2.0,"Illinois":2.5,"Iowa State":1.0,
-  "St Marys":1.0,"St. Johns":2.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,
-  "Vanderbilt":0.5,"UCLA":1.0,"Louisville":1.0,"Missouri":0.5,"VCU":0.5,
-  "Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,
-  "UCF":-1.0,"Nebraska":-1.0,"North Carolina":-1.5,
-  "Iowa":-0.5,"Kansas":-0.5,"Villanova":-0.5,"Utah St":-0.5
-};
+var JASON_SHEET_ADJ={"Duke":2.0,"Michigan":1.5,"Houston":1.5,"Illinois":1.0,"Iowa State":1.0,"St Marys":1.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,"Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,"Missouri":-1.0,"UCF":-1.0,"Nebraska":-1.0,"St. Johns":-1.0,"Utah St":-1.0,"Vanderbilt":-1.0,"Louisville":-1.0,"Iowa":-0.5,"VCU":-0.5,"North Carolina":-0.5};
+var CLAUDE_ADJ={"Duke":0.5,"Michigan":1.5,"Houston":2.0,"Illinois":2.5,"Iowa State":1.0,"St Marys":1.0,"St. Johns":2.0,"Virginia":0.5,"Tennessee":0.5,"Gonzaga":0.5,"Vanderbilt":0.5,"UCLA":1.0,"Louisville":1.0,"Missouri":0.5,"VCU":0.5,"Georgia":-2.0,"TCU":-1.5,"Santa Clara":-1.5,"MiamiOH/SMU":-1.5,"UCF":-1.0,"Nebraska":-1.0,"North Carolina":-1.5,"Iowa":-0.5,"Kansas":-0.5,"Villanova":-0.5,"Utah St":-0.5};
 
 function applyJasonAdj(teams){
   return teams.map(function(t){
@@ -236,34 +205,10 @@ var DEFAULT_TEAMS=[
 {id:64,name:"Tennessee St",seed:15,region:"Midwest",kenpom:-1.80,torvik:0.3997}
 ];
 
-var ALIASES={
-  "connecticut":"uconn","texas a&m":"texas am","ole miss":"mississippi",
-  "nc state":"nc state","saint johns":"st johns","st johns":"st johns",
-  "uconn":"uconn","byu":"byu","smu":"smu","florida state":"florida st",
-  "ohio state":"ohio st","michigan state":"michigan st","penn state":"penn st",
-  "iowa state":"iowa st","san diego state":"san diego st","colorado state":"colorado st",
-  "utah state":"utah st","mcneese state":"mcneese st","saint marys":"saint marys",
-  "st marys":"saint marys","vcu":"vcu","unc":"north carolina"
-};
-function norm(s){
-  var o="";s=(s||"").toLowerCase();
-  for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c===46||c===39)continue;o+=c===45?" ":s[i];}
-  o=o.replace(/\s+/g," ").trim();return ALIASES[o]||o;
-}
-function parseTorvik(r){
-  if(!r)return NaN;r=r.toString().replace(/"/g,"").trim().split("\n")[0].trim();
-  var v=parseFloat(r);if(!isNaN(v)&&v>=0&&v<=1)return v;
-  var m=r.match(/0\.\d+/);return m?parseFloat(m[0]):NaN;
-}
-function parseRatings(txt){
-  var rows=txt.trim().split("\n"),map={};
-  var data=rows[0].toLowerCase().indexOf("name")>=0?rows.slice(1):rows;
-  data.forEach(function(row){
-    var cols=row.indexOf("\t")>=0?row.split("\t"):row.split(",");
-    var n=(cols[0]||"").trim(),k=parseFloat(cols[1]),t=parseTorvik(cols[2]);
-    if(n&&!isNaN(k)&&!isNaN(t))map[norm(n)]={kenpom:k,torvik:t};
-  });return map;
-}
+var ALIASES={"connecticut":"uconn","texas a&m":"texas am","ole miss":"mississippi","nc state":"nc state","saint johns":"st johns","st johns":"st johns","uconn":"uconn","byu":"byu","smu":"smu","florida state":"florida st","ohio state":"ohio st","michigan state":"michigan st","penn state":"penn st","iowa state":"iowa st","san diego state":"san diego st","colorado state":"colorado st","utah state":"utah st","mcneese state":"mcneese st","saint marys":"saint marys","st marys":"saint marys","vcu":"vcu","unc":"north carolina"};
+function norm(s){var o="";s=(s||"").toLowerCase();for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);if(c===46||c===39)continue;o+=c===45?" ":s[i];}o=o.replace(/\s+/g," ").trim();return ALIASES[o]||o;}
+function parseTorvik(r){if(!r)return NaN;r=r.toString().replace(/"/g,"").trim().split("\n")[0].trim();var v=parseFloat(r);if(!isNaN(v)&&v>=0&&v<=1)return v;var m=r.match(/0\.\d+/);return m?parseFloat(m[0]):NaN;}
+function parseRatings(txt){var rows=txt.trim().split("\n"),map={};var data=rows[0].toLowerCase().indexOf("name")>=0?rows.slice(1):rows;data.forEach(function(row){var cols=row.indexOf("\t")>=0?row.split("\t"):row.split(",");var n=(cols[0]||"").trim(),k=parseFloat(cols[1]),t=parseTorvik(cols[2]);if(n&&!isNaN(k)&&!isNaN(t))map[norm(n)]={kenpom:k,torvik:t};});return map;}
 function lsGet(k){try{var r=localStorage.getItem(k);return r?JSON.parse(r):null;}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
@@ -276,23 +221,9 @@ function saveProfile(name,d){lsSet(profileKey(name),d);}
 function loadProfile(name){return lsGet(profileKey(name));}
 
 function seedBg(s){return s===1?"#166534":s<=4?"#1e40af":s<=8?"#6d28d9":s<=12?"#92400e":"#374151";}
-function edgeSt(v){
-  if(v===null)return{color:"#475569",label:"--",bg:"transparent"};
-  if(v>8)return{color:"#4ade80",label:"+"+v.toFixed(1)+"% FIRE",bg:"rgba(22,101,52,0.25)"};
-  if(v>3)return{color:"#86efac",label:"+"+v.toFixed(1)+"% +EV",bg:"rgba(22,101,52,0.12)"};
-  if(v>0)return{color:"#bbf7d0",label:"+"+v.toFixed(1)+"%",bg:"transparent"};
-  if(v>-3)return{color:"#fde68a",label:v.toFixed(1)+"%",bg:"transparent"};
-  return{color:"#f87171",label:v.toFixed(1)+"% neg",bg:"transparent"};
-}
+function edgeSt(v){if(v===null)return{color:"#475569",label:"--",bg:"transparent"};if(v>8)return{color:"#4ade80",label:"+"+v.toFixed(1)+"% FIRE",bg:"rgba(22,101,52,0.25)"};if(v>3)return{color:"#86efac",label:"+"+v.toFixed(1)+"% +EV",bg:"rgba(22,101,52,0.12)"};if(v>0)return{color:"#bbf7d0",label:"+"+v.toFixed(1)+"%",bg:"transparent"};if(v>-3)return{color:"#fde68a",label:v.toFixed(1)+"%",bg:"transparent"};return{color:"#f87171",label:v.toFixed(1)+"% neg",bg:"transparent"};}
 function evSt(v){if(v===null)return{color:"#475569",label:"--"};if(v>0)return{color:"#4ade80",label:"+$"+v.toFixed(0)};return{color:"#f87171",label:"-$"+Math.abs(v).toFixed(0)};}
-function fEvSt(p){
-  if(p===null)return{color:"#475569",label:"--",rec:""};
-  if(p>30)return{color:"#4ade80",label:"+"+p.toFixed(0)+"%",rec:"Strong Buy"};
-  if(p>10)return{color:"#86efac",label:"+"+p.toFixed(0)+"%",rec:"Buy"};
-  if(p>-10)return{color:"#fde68a",label:p.toFixed(0)+"%",rec:"Fair"};
-  if(p>-25)return{color:"#fca5a5",label:p.toFixed(0)+"%",rec:"Fade"};
-  return{color:"#f87171",label:p.toFixed(0)+"%",rec:"Hard Fade"};
-}
+function fEvSt(p){if(p===null)return{color:"#475569",label:"--",rec:""};if(p>30)return{color:"#4ade80",label:"+"+p.toFixed(0)+"%",rec:"Strong Buy"};if(p>10)return{color:"#86efac",label:"+"+p.toFixed(0)+"%",rec:"Buy"};if(p>-10)return{color:"#fde68a",label:p.toFixed(0)+"%",rec:"Fair"};if(p>-25)return{color:"#fca5a5",label:p.toFixed(0)+"%",rec:"Fade"};return{color:"#f87171",label:p.toFixed(0)+"%",rec:"Hard Fade"};}
 function iSt(x){return Object.assign({background:"#0f172a",border:"1px solid #334155",borderRadius:"5px",color:"#f1f5f9",padding:"3px 6px",fontSize:"11px",textAlign:"center"},x||{});}
 function bSt(x){return Object.assign({border:"none",borderRadius:"7px",cursor:"pointer",fontWeight:600,padding:"7px 14px",fontSize:"12px"},x||{});}
 function sSt(x){return Object.assign({padding:"7px 10px",borderRadius:"7px",border:"1px solid #334155",background:"#1e293b",color:"#f1f5f9",fontSize:"12px"},x||{});}
@@ -332,6 +263,8 @@ function App(){
   var _hy=useState(false),hydrated=_hy[0],setHydrated=_hy[1];
   var _injData=useState(null),injData=_injData[0],setInjData=_injData[1];
   var _injLoading=useState(false),injLoading=_injLoading[0],setInjLoading=_injLoading[1];
+  var _calcExO=useState(false),calcExO=_calcExO[0],setCalcExO=_calcExO[1];
+  var _calcExT=useState(""),calcExT=_calcExT[0],setCalcExT=_calcExT[1];
   var saveTimer=useRef(null);
   var latestRef=useRef({});
 
@@ -504,6 +437,28 @@ function App(){
     },400);
   }
 
+  // ── CALCUTTA COPY TABLE ──────────────────────────────────────────────────
+  var _calcExO=useState(false),calcExO=_calcExO[0],setCalcExO=_calcExO[1];
+  var _calcExT=useState(""),calcExT=_calcExT[0],setCalcExT=_calcExT[1];
+
+  function copyCalcuttaTable(){
+    if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
+    var unit=calcPot;
+    var sorted=teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
+    var lines_out=["Seed\tTeam\tRegion\tProjected Pot%\tValue Based On Your Pot Size"];
+    sorted.forEach(function(t){
+      var probs=simResults[t.id]||{};
+      var expRet=0,potPct=0;
+      ROUNDS.forEach(function(r){
+        expRet+=((probs[r]||0)*RPAY[r]*unit);
+        potPct+=(probs[r]||0)*RPAY[r];
+      });
+      lines_out.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));
+    });
+    setCalcExT(lines_out.join("\n"));
+    setCalcExO(true);
+  }
+
   var unit=calcPot;
   var gamesEntered=Object.keys(liveWinners).length;
   var ffEntered=Object.keys(ffWinners).length;
@@ -594,8 +549,7 @@ function App(){
       var prob=simResults&&simResults[t.id]?simResults[t.id][rk]||0:null;
       var isW=g.winner&&g.winner.id===t.id,isL=g.winner&&g.winner.id!==t.id;
       var tid=t.id,gk=g.gk;
-      return ce("div",{style:{display:"flex",alignItems:"center",gap:"5px",padding:"5px 8px",borderRadius:"5px",
-        background:isW?"rgba(22,101,52,0.3)":isL?"rgba(0,0,0,0.2)":"#0f172a",opacity:isL?0.45:1}},
+      return ce("div",{style:{display:"flex",alignItems:"center",gap:"5px",padding:"5px 8px",borderRadius:"5px",background:isW?"rgba(22,101,52,0.3)":isL?"rgba(0,0,0,0.2)":"#0f172a",opacity:isL?0.45:1}},
         badge(t.seed),
         ce("span",{style:{flex:1,fontWeight:600,fontSize:"11px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100px"}},t.name),
         prob!==null?ce("span",{style:{fontSize:"9px",color:"#60a5fa",marginRight:"2px"}},(prob*100).toFixed(1)+"%"):null,
@@ -864,8 +818,14 @@ function App(){
           ce("div",{},ce("div",{style:{fontSize:"10px",color:"#94a3b8",marginBottom:"3px"}},"Total Pot ($)"),ce("input",{type:"number",value:calcPot,onChange:function(ev){setCalcPot(parseFloat(ev.target.value)||0);},style:iSt({width:"90px",padding:"5px 8px"})})),
           ce("div",{style:{fontSize:"10px",color:"#64748b",lineHeight:1.7}},"Payouts: ",ce("strong",{style:{color:"#94a3b8"}},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7%")," of pot"),
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" results entered"):null,
-          ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt({marginLeft:"auto"})},
-            ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"))
+          ce("div",{style:{marginLeft:"auto",display:"flex",gap:"8px",alignItems:"center"}},
+            ce("button",{
+              onClick:copyCalcuttaTable,
+              style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"11px",padding:"6px 12px"})
+            },"📋 Copy for Comparison"),
+            ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},
+              ce("option",{value:"ev"},"Full EV"),ce("option",{value:"champ"},"Champ%"),ce("option",{value:"edge"},"R1 Edge"),ce("option",{value:"seed"},"Seed"))
+          )
         ),
         ce("div",{style:{overflowX:"auto"}},
           ce("table",{},
@@ -953,6 +913,15 @@ function App(){
         ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end"}},
           ce("button",{onClick:function(){setNpmO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),
           ce("button",{onClick:createProfile,disabled:!npn.trim(),style:bSt({background:npn.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Create")))):null,
+
+    calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
+      ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},
+        ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export — Paste into Source A"),
+        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all text below (Ctrl+A / Cmd+A), copy, then paste into the Source A box in the comparison tool."),
+        ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),
+        ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},
+          ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),
+          ce("button",{onClick:function(){setCalcExO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
 
     dcO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},
       ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"380px",width:"90%",border:"1px solid #7f1d1d"}},
