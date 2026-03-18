@@ -1041,7 +1041,9 @@ function App(){
     );
   });
 
-  var resultsRows=simResults?sortedTeams.map(function(team){
+      var R64_PAY_AMT=calcPot*RPAY.R64; // e.g. $935 on $10k pot
+
+    var resultsRows=simResults?sortedTeams.map(function(team){
     var p=simResults[team.id]||{},sm=r1Map[team.id];
     var simWp=p.R64||0,lineWp=sm&&sm.lineWp!==null?sm.lineWp:null;
     var edge=lineWp!==null?(simWp-lineWp)*100:null,es=edgeSt(edge);
@@ -1060,7 +1062,9 @@ function App(){
     return ce("tr",{key:team.id,style:{background:edge!==null&&edge>5?"rgba(22,101,52,0.08)":"transparent"}},cells);
   }):[];
 
-  var calcRows=simResults?sortedTeams.map(function(team){
+      var R64_PAY_AMT=calcPot*RPAY.R64;
+
+    var calcRows=simResults?sortedTeams.map(function(team){
     var probs=simResults[team.id]||{},champ=probs.Champion||0;
     var price=parseFloat(calcPrices[team.id])||0;
     var expRet=0;ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);});
@@ -1075,6 +1079,17 @@ function App(){
     var blendDollar=bEntry?bEntry.blendPct*unit:null;
     var blendPctCell=blendPctVal!==null?ce("span",{style:{color:"#e879f9",fontWeight:700}},(blendPctVal*100).toFixed(2)+"%"):ce("span",{style:{color:"#334155"}},"--");
     var blendDollarCell=blendDollar!==null?ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+blendDollar.toFixed(0)):ce("span",{style:{color:"#334155"}},"--");
+    // ML Calcutta equivalent — dogs only
+    var mlCalcValCell=ce("span",{style:{color:"#334155"}},"--");
+    var isFav=sm&&sm.isFav;
+    if(sm&&!isFav&&simWp>0&&simWp<1){
+      var mlNum=Math.round(((1-simWp)/simWp)*100);
+      if(mlNum>0){
+        var decOdds=(mlNum+100)/100;
+        var fairStake=Math.round(R64_PAY_AMT/decOdds);
+        mlCalcValCell=ce("span",{style:{color:"#f59e0b",fontWeight:700}},"$"+fairStake);
+      }
+    }
     return ce("tr",{key:team.id,style:{background:fullEv!==null&&fullEv>0?"rgba(22,101,52,0.08)":fullEv!==null&&fullEv<-50?"rgba(127,29,29,0.05)":"transparent"}},
       TD(ce("span",{},[ce("span",{key:"r",style:{color:"#475569",marginRight:"4px",fontSize:"10px"}},team.region),team.name]),{fontWeight:600,whiteSpace:"nowrap"}),
       TD(badge(team.seed)),
@@ -1088,7 +1103,8 @@ function App(){
       TD(fullEv!==null?(fullEv>=0?"+":"")+"$"+Math.abs(fullEv).toFixed(0):"--",{textAlign:"center",fontWeight:700,color:fes.color}),
       TD(fes.label,{textAlign:"center",color:fes.color,fontWeight:700}),
       TD(es.label,{textAlign:"center",fontWeight:700,color:es.color,background:es.bg,borderRadius:"4px",borderLeft:"1px solid #1e293b"}),
-      TD(fes.rec,{whiteSpace:"nowrap",fontSize:"10px",color:fes.color})
+      TD(fes.rec,{whiteSpace:"nowrap",fontSize:"10px",color:fes.color}),
+      TD(mlCalcValCell,{textAlign:"center",borderLeft:"1px solid #334155"})
     );
   }):[];
 
@@ -1412,7 +1428,7 @@ function App(){
           simTime?ce("span",{style:{fontSize:"10px",color:"#64748b"}},simTime+"s"):null,
           ce("button",{onClick:function(){doRunSim(false);},disabled:simming,style:bSt({marginLeft:"auto",background:"#1d4ed8",color:"#fff"})},simming?"...":"Re-run")
         ),
-        ce("div",{style:{overflowX:"auto"}},ce("table",{},ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),TH("Spread",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Line%",{textAlign:"center"}),TH("Sim%",{textAlign:"center"}),TH("Edge",{textAlign:"center"}),TH("Implied$",{textAlign:"center"}),TH("Impl Sprd",{textAlign:"center"}))),ce("tbody",{},resultsRows)))
+        ce("div",{style:{overflowX:"auto"}},ce("table",{},ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),TH("Spread",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Line%",{textAlign:"center"}),TH("Sim%",{textAlign:"center"}),TH("Edge",{textAlign:"center"}),              TH("Implied$",{textAlign:"center"}),TH("Impl Sprd",{textAlign:"center"}))),ce("tbody",{},resultsRows)))
       )
     ):null,
 
@@ -1443,7 +1459,7 @@ function App(){
           )
         ),
         ce("div",{style:{overflowX:"auto"}},ce("table",{},
-          ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("Champ%",{textAlign:"center"}),TH("Exp Return",{textAlign:"center"}),TH("Blend %",{textAlign:"center",borderLeft:"2px solid #4a1d96",color:"#e879f9"}),TH("Blend Value",{textAlign:"center",color:"#c084fc"}),TH("Bid",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("R1-Only EV",{textAlign:"center"}),TH("Full EV $",{textAlign:"center"}),TH("Full EV%",{textAlign:"center"}),TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("Rec"))),
+          ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("Champ%",{textAlign:"center"}),TH("Exp Return",{textAlign:"center"}),TH("Blend %",{textAlign:"center",borderLeft:"2px solid #4a1d96",color:"#e879f9"}),TH("Blend Value",{textAlign:"center",color:"#c084fc"}),TH("Bid",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("R1-Only EV",{textAlign:"center"}),TH("Full EV $",{textAlign:"center"}),TH("Full EV%",{textAlign:"center"}),              TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("Rec"),TH("ML≡Calc",{textAlign:"center",borderLeft:"1px solid #334155",color:"#f59e0b"}))),
           ce("tbody",{},calcRows)
         )),
         portfolio
