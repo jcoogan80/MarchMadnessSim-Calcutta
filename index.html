@@ -895,14 +895,17 @@ function App(){
           var gk=reg+"_"+roundLabel+"_"+mi;
           var winnerId=liveWinners[gk]||null;
           if(!winnerId){
-            var lk=tA.id+"_"+tB.id;
-            var sp=lines[lk]||lines[tB.id+"_"+tA.id]||"";
-            var rawSp=sp!==""?parseFloat(sp):null;
-            var lineWpA=rawSp!==null?sp2wp(rawSp):null;
-            var lineWpB=lineWpA!==null?1-lineWpA:null;
-            var isFavA=rawSp!==null&&rawSp<0;
-            map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lk,lineWp:lineWpA,isFav:isFavA,alive:true,decided:false};
-            map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lk,lineWp:lineWpB,isFav:!isFavA&&rawSp!==null,alive:true,decided:false};
+            // Use per-team spread keys so each team's spread is always from their own perspective
+            var lkA=tA.id+"_"+tB.id;
+            var lkB=tB.id+"_"+tA.id;
+            var spA=lines[lkA]!==""&&lines[lkA]!==undefined?parseFloat(lines[lkA]):null;
+            var spB=lines[lkB]!==""&&lines[lkB]!==undefined?parseFloat(lines[lkB]):null;
+            // Prefer whichever key has a value; if both, use the one for the team being mapped
+            var lineWpA=spA!==null&&!isNaN(spA)?sp2wp(spA):spB!==null&&!isNaN(spB)?sp2wp(-spB):null;
+            var lineWpB=spB!==null&&!isNaN(spB)?sp2wp(spB):spA!==null&&!isNaN(spA)?sp2wp(-spA):null;
+            var isFavA=lineWpA!==null&&lineWpA>0.5;
+            map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lkA,lineWp:lineWpA,isFav:isFavA,alive:true,decided:false};
+            map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lkB,lineWp:lineWpB,isFav:lineWpB!==null&&lineWpB>0.5,alive:true,decided:false};
             currentWinners.push(null);
           } else {
             var winner=teams.filter(function(t){return t.id===winnerId;})[0]||null;
@@ -1068,8 +1071,14 @@ function App(){
     cells.push(
       TD(spreadCell,{textAlign:"center",borderLeft:"1px solid #1e293b",minWidth:"90px"}),
       TD(lineWp!==null?(lineWp*100).toFixed(1)+"%":"--",{textAlign:"center",color:"#94a3b8"}),
-      TD(currentSimWp>0?(currentSimWp*100).toFixed(1)+"%":"--",{textAlign:"center",color:"#60a5fa",fontWeight:600}),
-      TD(es.label,{textAlign:"center",fontWeight:700,color:es.color,background:es.bg,borderRadius:"4px"}),
+      TD(ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}},
+        ce("span",{style:{color:"#60a5fa",fontWeight:600}},currentSimWp>0?(currentSimWp*100).toFixed(1)+"%":"--"),
+        lm&&lm.round&&lm.round!=="R64"?ce("span",{style:{fontSize:"8px",color:"#475569"}},"cond/"+lm.round):null
+      ),{textAlign:"center"}),
+      TD(ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}},
+        ce("span",{style:{color:es.color,fontWeight:700}},es.label),
+        lm?ce("span",{style:{fontSize:"8px",color:"#334155"}},"lk:"+((lm.lineKey||"").split("_").join("/"))):null
+      ),{textAlign:"center",background:es.bg,borderRadius:"4px"}),
       TD(impliedML,{textAlign:"center",fontWeight:600,color:currentSimWp>=0.5?"#f87171":"#4ade80"}),
       TD(impliedSpread,{textAlign:"center",fontWeight:600,color:currentSimWp>=0.5?"#f87171":"#4ade80"})
     );
