@@ -1027,7 +1027,13 @@ function App(){
     var isElim=lm&&lm.alive===false;
     var simWp=p.R64||0;
     var roundProbs={"R64":p.R64||0,"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"NCG":p.Champion||0};
-    var currentSimWp=lm&&lm.round?roundProbs[lm.round]||0:simWp;
+    // Convert cumulative round prob → conditional game win prob
+    // e.g. R32 win prob = P(win R32) / P(reached R32) = R32 / R64
+    var prevRoundProb={"R64":1,"R32":p.R64||0,"S16":p.R32||0,"E8":p.S16||0,"F4":p.E8||0,"NCG":p.F4||0};
+    var curRound=lm&&lm.round?lm.round:"R64";
+    var cumProb=roundProbs[curRound]||0;
+    var prevProb=prevRoundProb[curRound]||1;
+    var currentSimWp=prevProb>0.001?Math.min(0.99,cumProb/prevProb):cumProb;
     var lineWp=lm&&!lm.decided?lm.lineWp:null;
     var edge=lineWp!==null?(currentSimWp-lineWp)*100:null;
     var es=edgeSt(edge);
