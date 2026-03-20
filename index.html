@@ -413,8 +413,8 @@ var INJURY_DATA=[
   {team:"St. Johns",severity:"Low",injuries:[{player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness, expected available."}]}
 ];
 
-function runSim(teams,N,blendW,liveWinners,useAdj){
-  var rng=mulberry32(20250316),STD=11.2,lw=liveWinners||{};
+function runSim(teams,N,blendW,liveWinners,useAdj,seed){
+  var rng=mulberry32(seed||20250316),STD=11.2,lw=liveWinners||{};
   var byId={},baseRat={};
   for(var i=0;i<teams.length;i++){byId[teams[i].id]=teams[i];baseRat[teams[i].id]=blendR(teams[i],blendW,useAdj);}
   var wins={};for(var i=0;i<teams.length;i++)wins[teams[i].id]={R64:0,R32:0,S16:0,E8:0,F4:0,Champion:0};
@@ -541,6 +541,7 @@ function parseFutureYear(raw){
 }
 
 function App(){
+  // ── ALL useState DECLARATIONS FIRST ──────────────────────────────────────
   var _names=useState(getNames()),profNames=_names[0],setProfNames=_names[1];
   var _active=useState(getActive()),active=_active[0],setActive=_active[1];
   var _npmO=useState(false),npmO=_npmO[0],setNpmO=_npmO[1];
@@ -561,10 +562,15 @@ function App(){
   var _cp=useState({}),calcPrices=_cp[0],setCalcPrices=_cp[1];
   var _myTeams=useState({}),myTeams=_myTeams[0],setMyTeams=_myTeams[1];
   var _pot=useState(1000),calcPot=_pot[0],setCalcPot=_pot[1];
+  var _varData=useState(null),varData=_varData[0],setVarData=_varData[1];
+  var _varRunning=useState(false),varRunning=_varRunning[0],setVarRunning=_varRunning[1];
+  var _varCount=useState(10),varCount=_varCount[0],setVarCount=_varCount[1];
+  // FIX: simSeed declared as useState before any useMemo/function references it
+  var _seed=useState(20250316),simSeed=_seed[0],setSimSeed=_seed[1];
   var _st=useState(null),simTime=_st[0],setSimTime=_st[1];
   var _msg=useState(""),msg=_msg[0],setMsg=_msg[1];
-  var _pmO=useState(false),pmO=_pmO[0],setPmO=_pmO[1];
   var _pt=useState(""),pt=_pt[0],setPt=_pt[1];
+  var _pmO=useState(false),pmO=_pmO[0],setPmO=_pmO[1];
   var _emO=useState(false),emO=_emO[0],setEmO=_emO[1];
   var _et=useState(""),et=_et[0],setEt=_et[1];
   var _imO=useState(false),imO=_imO[0],setImO=_imO[1];
@@ -588,8 +594,13 @@ function App(){
   var _futureRaw=useState(""),futureRaw=_futureRaw[0],setFutureRaw=_futureRaw[1];
   var _histAnalysis=useState(null),histAnalysis=_histAnalysis[0],setHistAnalysis=_histAnalysis[1];
   var _histLoading=useState(false),histLoading=_histLoading[0],setHistLoading=_histLoading[1];
-  var saveTimer=useRef(null);var latestRef=useRef({});
 
+  // ── REFS ──────────────────────────────────────────────────────────────────
+  var saveTimer=useRef(null);
+  var latestRef=useRef({});
+  var rerunTimer=useRef(null);
+
+  // ── EFFECTS ───────────────────────────────────────────────────────────────
   useEffect(function(){
     var d=loadProfile(active);
     if(d){
@@ -603,6 +614,7 @@ function App(){
   },[]);
 
   latestRef.current={teams,simResults,numSims,blendW,lines,liveWinners,ffWinners,calcPrices,myTeams,calcPot,tab};
+
   function scheduleSave(){
     if(saveTimer.current)clearTimeout(saveTimer.current);
     saveTimer.current=setTimeout(function(){
@@ -612,6 +624,14 @@ function App(){
   }
   useEffect(function(){if(hydrated)scheduleSave();},[teams,simResults,numSims,blendW,lines,liveWinners,ffWinners,calcPrices,myTeams,calcPot,tab]);
 
+  useEffect(function(){
+    if(!hydrated||!simResults)return;
+    if(rerunTimer.current)clearTimeout(rerunTimer.current);
+    rerunTimer.current=setTimeout(function(){setSimRes(runSim(teams,numSims,blendW,liveWinners,useAdj,simSeed));},100);
+    return function(){clearTimeout(rerunTimer.current);};
+  },[liveWinners,useAdj]);
+
+  // ── PROFILE MANAGEMENT ────────────────────────────────────────────────────
   function switchProfile(name){
     setActive(name);lsSet(activeKey(),name);
     var d=loadProfile(name);
@@ -630,18 +650,13 @@ function App(){
   function createProfile(){var name=npn.trim();if(!name||profNames.indexOf(name)>=0)return;var nn=profNames.concat([name]);setProfNames(nn);lsSet(namesKey(),nn);setNpmO(false);setNpn("");switchProfile(name);}
   function deleteProfile(){if(profNames.length<=1){alert("Can't delete only profile.");return;}var nn=profNames.filter(function(n){return n!==active;});lsDel(profileKey(active));setProfNames(nn);lsSet(namesKey(),nn);setDcO(false);switchProfile(nn[0]);}
 
-  function doRunSim(andSwitch){
+  // ── SIM ACTIONS ───────────────────────────────────────────────────────────
+  function doRunSim(andSwitch,newSeed){
     setSimming(true);
-    var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners),ua=useAdj;
-    setTimeout(function(){var t0=performance.now();var res=runSim(snap,sn,sb,slw,ua);setSimTime(((performance.now()-t0)/1000).toFixed(2));setSimRes(res);setSimming(false);if(andSwitch)setTab("results");},30);
+    var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners),ua=useAdj,sd=newSeed!=null?newSeed:simSeed;
+    if(newSeed!=null)setSimSeed(newSeed);
+    setTimeout(function(){var t0=performance.now();var res=runSim(snap,sn,sb,slw,ua,sd);setSimTime(((performance.now()-t0)/1000).toFixed(2));setSimRes(res);setSimming(false);if(andSwitch)setTab("results");},30);
   }
-  var rerunTimer=useRef(null);
-  useEffect(function(){
-    if(!hydrated||!simResults)return;
-    if(rerunTimer.current)clearTimeout(rerunTimer.current);
-    rerunTimer.current=setTimeout(function(){setSimRes(runSim(teams,numSims,blendW,liveWinners,useAdj));},100);
-    return function(){clearTimeout(rerunTimer.current);};
-  },[liveWinners,useAdj]);
 
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
@@ -692,17 +707,92 @@ function App(){
       setImO(false);setIt("");setIe("");setMsg("Imported.");setTimeout(function(){setMsg("");},3000);
     }catch(e){setIe("Invalid data.");}
   }
+
   function loadInjuries(){
     setInjLoading(true);
-    setTimeout(function(){
+    setInjData(null);
+    var teamList=teams.map(function(t){return t.name;}).join(", ");
+    var prompt="You are a sports injury analyst. Search the web right now for the latest NCAA Tournament 2026 injury news.\n\nFor each of these teams: "+teamList+"\n\nReturn ONLY a JSON array (no markdown, no explanation) with this structure:\n[\n  {\n    \"team\": \"Duke\",\n    \"severity\": \"High\",\n    \"injuries\": [\n      {\"player\": \"Name\", \"status\": \"Out\", \"detail\": \"Brief current status from today's news\"}\n    ]\n  }\n]\n\nSeverity: High = key player Out or multiple Questionable. Medium = one starter Questionable. Low = minor issue. None = no known injuries.\nOnly include teams with actual injury news. Use web search to find the most current information as of today. Return valid JSON only.";
+    fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        messages:[{role:"user",content:prompt}]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var text="";
+      if(data.content){data.content.forEach(function(block){if(block.type==="text")text+=block.text;});}
+      // strip markdown fences
+      text=text.replace(/```json[\s\S]*?```/g,function(m){return m.replace(/```json/,"").replace(/```/,"");});
+      text=text.replace(/```/g,"").trim();
+      // extract outermost JSON array
+      var start=text.indexOf("["),end=text.lastIndexOf("]");
+      if(start>=0&&end>start)text=text.slice(start,end+1);
+      // sanitize common JSON issues: trailing commas before } or ]
+      text=text.replace(/,(\s*[}\]])/g,"$1");
+      // remove control characters that break JSON.parse
+      text=text.replace(/[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]/g,"");
+      // sanitize string values: fix unescaped quotes and newlines inside "..." values
+      text=text.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g,function(match){
+        // re-escape any raw newlines/tabs that snuck inside string values
+        return match.replace(/\n/g,"\\n").replace(/\r/g,"\\r").replace(/\t/g,"\\t");
+      });
+      var parsed;
+      try{
+        parsed=JSON.parse(text);
+      } catch(e){
+        // fallback: parse team by team using a tolerant approach
+        parsed=[];
+        // extract each team block between { "team": ... } boundaries
+        var teamRx=/"team"\s*:\s*"([^"]+)"/g,tm;
+        var blocks=text.split(/(?=\{\s*"team")/);
+        blocks.forEach(function(block){
+          if(block.indexOf('"team"')<0)return;
+          // find balanced braces
+          var depth=0,start2=-1,end2=-1;
+          for(var ci=0;ci<block.length;ci++){
+            if(block[ci]==='{'){if(depth===0)start2=ci;depth++;}
+            else if(block[ci]==='}'){depth--;if(depth===0){end2=ci;break;}}
+          }
+          if(start2<0||end2<0)return;
+          var chunk=block.slice(start2,end2+1);
+          // clean up the chunk: remove trailing commas, fix bare strings
+          chunk=chunk.replace(/,(\s*[}\]])/g,"$1");
+          try{var obj=JSON.parse(chunk);if(obj.team)parsed.push(obj);}
+          catch(e2){
+            // extract fields manually as last resort
+            var teamM=chunk.match(/"team"\s*:\s*"([^"]+)"/);
+            var sevM=chunk.match(/"severity"\s*:\s*"([^"]+)"/);
+            if(teamM)parsed.push({team:teamM[1],severity:(sevM&&sevM[1])||"Unknown",injuries:[]});
+          }
+        });
+        if(!parsed.length)throw new Error("Could not parse injury JSON: "+e.message);
+      }
+      teams.forEach(function(t){
+        var found=parsed.some(function(r){return r.team.toLowerCase()===t.name.toLowerCase()||r.team.toLowerCase().indexOf(t.name.toLowerCase().split(" ")[0])>=0;});
+        if(!found)parsed.push({team:t.name,severity:"None",injuries:[]});
+      });
+      var order={High:0,Medium:1,Low:2,None:3};
+      parsed.sort(function(a,b){return order[a.severity]-order[b.severity];});
+      setInjData({teams:parsed,timestamp:"Live · "+new Date().toLocaleString(),live:true});
+      setInjLoading(false);
+    })
+    .catch(function(err){
+      console.error("Injury fetch error:",err);
       var teamNames=teams.map(function(t){return t.name;});
       var result=INJURY_DATA.filter(function(d){return teamNames.indexOf(d.team)>=0;});
-      var reported=result.map(function(d){return d.team;});
-      teams.forEach(function(t){if(reported.indexOf(t.name)<0)result.push({team:t.name,severity:"None",injuries:[]});});
+      teams.forEach(function(t){if(!result.some(function(r){return r.team===t.name;}))result.push({team:t.name,severity:"None",injuries:[]});});
       var order={High:0,Medium:1,Low:2,None:3};result.sort(function(a,b){return order[a.severity]-order[b.severity];});
-      setInjData({teams:result,timestamp:new Date().toLocaleString()});setInjLoading(false);
-    },400);
+      setInjData({teams:result,timestamp:"Fallback (static) · "+new Date().toLocaleString(),live:false});
+      setInjLoading(false);
+    });
   }
+
   function copyCalcuttaTable(){
     if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
     var unit=calcPot;var sorted=teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
@@ -710,6 +800,7 @@ function App(){
     sorted.forEach(function(t){var probs=simResults[t.id]||{},expRet=0,potPct=0;ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);potPct+=(probs[r]||0)*RPAY[r];});lo.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));});
     setCalcExT(lo.join("\n"));setCalcExO(true);
   }
+
   function runCompare(){
     var a=parseCmpSource(cmpA),b=parseCmpSource(cmpB);if(!a.length&&!b.length)return;
     var mapB={};b.forEach(function(t){mapB[t.name]=t;});
@@ -734,16 +825,44 @@ function App(){
     setTimeout(function(){var extra=futureRaw.trim()?parseFutureYear(futureRaw):[];var allData=HARDCODED.concat(extra);var result=runAnalysis(allData,teams);setHistAnalysis(result);setHistLoading(false);},200);
   }
 
+  // ── VARIANCE RUN ──────────────────────────────────────────────────────────
+  function runVarianceAnalysis(){
+    if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
+    setVarRunning(true);
+    setTimeout(function(){
+      var seeds=[];
+      for(var i=0;i<varCount;i++)seeds.push(Math.floor(Math.random()*2147483647));
+      var allRuns=seeds.map(function(s){return runSim(teams,numSims,blendW,liveWinners,useAdj,s);});
+      var vd={};
+      teams.forEach(function(t){
+        var champVals=allRuns.map(function(r){return(r[t.id]&&r[t.id].Champion)||0;});
+        var avg=champVals.reduce(function(s,v){return s+v;},0)/champVals.length;
+        var mn=Math.min.apply(null,champVals),mx=Math.max.apply(null,champVals);
+        var variance=champVals.reduce(function(s,v){return s+(v-avg)*(v-avg);},0)/champVals.length;
+        var stdDev=Math.sqrt(variance);
+        // F4 Runs: count seeds where team's F4 prob > their baseline champ prob (i.e. actually showed up in F4 in some sims)
+        var baseChamp=(simResults[t.id]&&simResults[t.id].Champion)||0;
+        var f4Count=allRuns.filter(function(r){return((r[t.id]&&r[t.id].F4)||0)>baseChamp*1.5;}).length;
+        vd[t.id]={avg:avg,min:mn,max:mx,spread:mx-mn,stdDev:stdDev,f4Count:f4Count,n:varCount};
+      });
+      setVarData(vd);
+      setVarRunning(false);
+    },30);
+  }
+
+  // ── DERIVED STATE (useMemo — after all useState/useEffect/useRef) ─────────
   var hasBlend=Object.keys(blendMap).length>0;
   var unit=calcPot;
   var gamesEntered=Object.keys(liveWinners).length;
   var ffEntered=Object.keys(ffWinners).length;
   var blendLabel=blendW===0?"KenPom Only":blendW===1?"T-Rank Only":"T "+Math.round(blendW*100)+"% / K "+Math.round((1-blendW)*100)+"%";
 
+  // FIX: r1Map declared here, after all useState hooks, so it's always available
   var r1Map=useMemo(function(){
     var map={};
     REGIONS.forEach(function(reg){
-      var rt=teams.filter(function(t){return t.region===reg;});var bySeed={};rt.forEach(function(t){bySeed[t.seed]=t;});
+      var rt=teams.filter(function(t){return t.region===reg;});
+      var bySeed={};rt.forEach(function(t){bySeed[t.seed]=t;});
       R64_PAIRS.forEach(function(pair,mi){
         var t1=bySeed[pair[0]],t2=bySeed[pair[1]];if(!t1||!t2)return;
         var key=t1.id+"_"+t2.id,gk=reg+"_R64_"+mi;
@@ -755,6 +874,73 @@ function App(){
     });
     return map;
   },[teams,lines]);
+
+  var liveMatchupMap=useMemo(function(){
+    var map={};
+    var roundKeys=["R64","R32","S16","E8"];
+    var roundPairs=[R64_PAIRS,R32_PAIRS,S16_PAIRS,[[0,1]]];
+    REGIONS.forEach(function(reg){
+      var rt=teams.filter(function(t){return t.region===reg;});
+      var bySeed={};rt.forEach(function(t){bySeed[t.seed]=t;});
+      var prevWinners=null;
+      for(var ri=0;ri<roundKeys.length;ri++){
+        var pairs=roundPairs[ri];
+        var roundLabel=roundKeys[ri];
+        var currentWinners=[];
+        pairs.forEach(function(pair,mi){
+          var tA,tB;
+          if(ri===0){tA=bySeed[R64_PAIRS[mi][0]];tB=bySeed[R64_PAIRS[mi][1]];}
+          else{tA=prevWinners?prevWinners[pair[0]]:null;tB=prevWinners?prevWinners[pair[1]]:null;}
+          if(!tA||!tB){currentWinners.push(null);return;}
+          var gk=reg+"_"+roundLabel+"_"+mi;
+          var winnerId=liveWinners[gk]||null;
+          if(!winnerId){
+            var lk=tA.id+"_"+tB.id;
+            var sp=lines[lk]||lines[tB.id+"_"+tA.id]||"";
+            var rawSp=sp!==""?parseFloat(sp):null;
+            var lineWpA=rawSp!==null?sp2wp(rawSp):null;
+            var lineWpB=lineWpA!==null?1-lineWpA:null;
+            var isFavA=rawSp!==null&&rawSp<0;
+            map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lk,lineWp:lineWpA,isFav:isFavA,alive:true,decided:false};
+            map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lk,lineWp:lineWpB,isFav:!isFavA&&rawSp!==null,alive:true,decided:false};
+            currentWinners.push(null);
+          } else {
+            var winner=teams.filter(function(t){return t.id===winnerId;})[0]||null;
+            var loser=winner&&winner.id===tA.id?tB:tA;
+            if(loser)map[loser.id]={alive:false,decided:true};
+            currentWinners.push(winner);
+          }
+        });
+        prevWinners=currentWinners;
+      }
+    });
+    // F4 matchup detection
+    var f4Teams=[];
+    REGIONS.forEach(function(reg){
+      var e8gk=reg+"_E8_0",e8wid=liveWinners[e8gk];
+      var e8w=e8wid?teams.filter(function(t){return t.id===e8wid;})[0]:null;
+      f4Teams.push(e8w);
+    });
+    [[0,1],[2,3]].forEach(function(pair,pi){
+      var tA=f4Teams[pair[0]],tB=f4Teams[pair[1]];
+      if(!tA||!tB)return;
+      var gk="F4_"+pi,wid=liveWinners[gk];
+      if(!wid){
+        map[tA.id]=Object.assign({},map[tA.id]||{},{round:"F4",gk:gk,opp:tB,lineKey:tA.id+"_"+tB.id,lineWp:null,isFav:false,alive:true,decided:false});
+        map[tB.id]=Object.assign({},map[tB.id]||{},{round:"F4",gk:gk,opp:tA,lineKey:tA.id+"_"+tB.id,lineWp:null,isFav:false,alive:true,decided:false});
+      } else {
+        var loser=wid===tA.id?tB:tA;
+        if(loser)map[loser.id]={alive:false,decided:true};
+      }
+    });
+    var f4w0=liveWinners["F4_0"]?teams.filter(function(t){return t.id===liveWinners["F4_0"];})[0]:null;
+    var f4w1=liveWinners["F4_1"]?teams.filter(function(t){return t.id===liveWinners["F4_1"];})[0]:null;
+    if(f4w0&&f4w1&&!liveWinners["NCG_0"]){
+      map[f4w0.id]=Object.assign({},map[f4w0.id]||{},{round:"NCG",gk:"NCG_0",opp:f4w1,lineKey:f4w0.id+"_"+f4w1.id,lineWp:null,isFav:false,alive:true,decided:false});
+      map[f4w1.id]=Object.assign({},map[f4w1.id]||{},{round:"NCG",gk:"NCG_0",opp:f4w0,lineKey:f4w0.id+"_"+f4w1.id,lineWp:null,isFav:false,alive:true,decided:false});
+    }
+    return map;
+  },[teams,liveWinners,lines]);
 
   var sortedTeams=useMemo(function(){
     var t=teams.slice();var q=search.toLowerCase();
@@ -787,6 +973,7 @@ function App(){
     return{regions:regions,f4:f4,ncg:ncg};
   },[teams,liveWinners]);
 
+  // ── SUBCOMPONENTS ─────────────────────────────────────────────────────────
   function GameCard(props){
     var g=props.game;var tA=g.tA,tB=g.tB,locked=!!g.winner;
     var rkMap={"R64":"R64","R32":"R32","S16":"S16","E8":"E8","F4":"F4","NCG":"Champion"};
@@ -835,21 +1022,72 @@ function App(){
 
   // ── WIN PROBS ROWS ────────────────────────────────────────────────────────
   var resultsRows=simResults?sortedTeams.map(function(team){
-    var p=simResults[team.id]||{},sm=r1Map[team.id];
-    var simWp=p.R64||0,lineWp=sm&&sm.lineWp!==null?sm.lineWp:null;
-    var edge=lineWp!==null?(simWp-lineWp)*100:null,es=edgeSt(edge);
-    var bl=blendR(team,blendW,useAdj),isFav=sm&&sm.isFav,key=sm?sm.key:null;
-    var spreadCell=isFav?ce("input",{type:"number",placeholder:"-14.5",value:key&&lines[key]||"",onChange:function(ev){var v=ev.target.value,k=key;setLines(function(prev){var n=Object.assign({},prev);n[k]=v;return n;});},style:iSt({width:"70px"})}):ce("span",{style:{color:"#475569",fontSize:"10px"}},sm?"dog vs #"+sm.opp.seed:"--");
-    var impliedML="--",impliedSpread="--";
-    var clampedWp=Math.min(0.98,Math.max(0.02,simWp));
-    if(sm&&simWp>0&&simWp<1){
-      impliedML=simWp>=0.5?"-"+Math.round((simWp/(1-simWp))*100):"+"+Math.round(((1-simWp)/simWp)*100);
-      var sp=Math.log((1/clampedWp)-1)/0.163;impliedSpread=(sp>0?"+":"")+sp.toFixed(1);
+    var p=simResults[team.id]||{};
+    var lm=liveMatchupMap[team.id]||null;
+    var isElim=lm&&lm.alive===false;
+    var simWp=p.R64||0;
+    var roundProbs={"R64":p.R64||0,"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"NCG":p.Champion||0};
+    var currentSimWp=lm&&lm.round?roundProbs[lm.round]||0:simWp;
+    var lineWp=lm&&!lm.decided?lm.lineWp:null;
+    var edge=lineWp!==null?(currentSimWp-lineWp)*100:null;
+    var es=edgeSt(edge);
+    var bl=blendR(team,blendW,useAdj);
+    var spreadCell;
+    if(isElim){
+      spreadCell=ce("span",{style:{color:"#334155",fontSize:"10px"}},"—");
+    } else if(lm&&lm.opp&&!lm.decided){
+      var lk=lm.lineKey;
+      var curVal=lines[lk]||"";
+      spreadCell=ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px",alignItems:"center"}},
+        ce("span",{style:{fontSize:"9px",color:"#64748b"}},"vs #"+lm.opp.seed+" "+lm.opp.name.split(" ")[0]),
+        ce("input",{type:"number",placeholder:"-14.5",value:curVal,onChange:function(ev){var v=ev.target.value,k=lk;setLines(function(prev){var n=Object.assign({},prev);n[k]=v;return n;});},style:iSt({width:"70px"})})
+      );
+    } else {
+      spreadCell=ce("span",{style:{color:"#475569",fontSize:"10px"}},lm&&lm.opp?"vs "+lm.opp.name:"--");
     }
-    var cells=[TD(ce("span",{},[ce("span",{key:"r",style:{color:"#475569",marginRight:"4px",fontSize:"10px"}},team.region),team.name]),{fontWeight:600,whiteSpace:"nowrap"}),TD(badge(team.seed)),TD(ce("span",{style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:600}},(bl>0?"+":"")+bl.toFixed(1)),{textAlign:"center"})];
+    var impliedML="--",impliedSpread="--";
+    var clampedWp=Math.min(0.98,Math.max(0.02,currentSimWp));
+    if(lm&&!isElim&&currentSimWp>0&&currentSimWp<1){
+      impliedML=currentSimWp>=0.5?"-"+Math.round((currentSimWp/(1-currentSimWp))*100):"+"+Math.round(((1-currentSimWp)/currentSimWp)*100);
+      var sp=Math.log((1/clampedWp)-1)/0.163;
+      impliedSpread=(sp>0?"+":"")+sp.toFixed(1);
+    }
+    var rowStyle={background:isElim?"rgba(0,0,0,0.3)":edge!==null&&edge>5?"rgba(22,101,52,0.08)":"transparent",opacity:isElim?0.35:1};
+    var cells=[
+      TD(ce("span",{},[ce("span",{key:"r",style:{color:"#475569",marginRight:"4px",fontSize:"10px"}},team.region),team.name]),{fontWeight:600,whiteSpace:"nowrap"}),
+      TD(badge(team.seed)),
+      TD(ce("span",{style:{color:bl>=20?"#4ade80":bl>=10?"#60a5fa":"#94a3b8",fontWeight:600}},(bl>0?"+":"")+bl.toFixed(1)),{textAlign:"center"})
+    ];
     ROUNDS.forEach(function(r){var v=p[r]||0;cells.push(TD(v>=0.001?(v*100).toFixed(1)+"%":"<0.1%",{textAlign:"center",color:v>=0.5?"#4ade80":v>=0.2?"#60a5fa":v>=0.05?"#c084fc":"#64748b",fontWeight:v>0.1?700:400}));});
-    cells.push(TD(spreadCell,{textAlign:"center",borderLeft:"1px solid #1e293b"}),TD(lineWp!==null?(lineWp*100).toFixed(1)+"%":"--",{textAlign:"center",color:"#94a3b8"}),TD((simWp*100).toFixed(1)+"%",{textAlign:"center",color:"#60a5fa",fontWeight:600}),TD(es.label,{textAlign:"center",fontWeight:700,color:es.color,background:es.bg,borderRadius:"4px"}),TD(impliedML,{textAlign:"center",fontWeight:600,color:simWp>=0.5?"#f87171":"#4ade80"}),TD(impliedSpread,{textAlign:"center",fontWeight:600,color:simWp>=0.5?"#f87171":"#4ade80"}));
-    return ce("tr",{key:team.id,style:{background:edge!==null&&edge>5?"rgba(22,101,52,0.08)":"transparent"}},cells);
+    cells.push(
+      TD(spreadCell,{textAlign:"center",borderLeft:"1px solid #1e293b",minWidth:"90px"}),
+      TD(lineWp!==null?(lineWp*100).toFixed(1)+"%":"--",{textAlign:"center",color:"#94a3b8"}),
+      TD(currentSimWp>0?(currentSimWp*100).toFixed(1)+"%":"--",{textAlign:"center",color:"#60a5fa",fontWeight:600}),
+      TD(es.label,{textAlign:"center",fontWeight:700,color:es.color,background:es.bg,borderRadius:"4px"}),
+      TD(impliedML,{textAlign:"center",fontWeight:600,color:currentSimWp>=0.5?"#f87171":"#4ade80"}),
+      TD(impliedSpread,{textAlign:"center",fontWeight:600,color:currentSimWp>=0.5?"#f87171":"#4ade80"})
+    );
+    if(varData&&varData[team.id]){
+      var vd=varData[team.id];
+      var spreadPct=vd.spread*100;
+      var spreadColor=spreadPct>10?"#f87171":spreadPct>5?"#fb923c":spreadPct>2?"#fde68a":"#4ade80";
+      cells.push(
+        TD(ce("span",{style:{color:"#818cf8",fontWeight:600}},(vd.avg*100).toFixed(1)+"%"),{textAlign:"center",borderLeft:"2px solid #1e3a5f"}),
+        TD(ce("span",{style:{color:"#f87171"}},(vd.min*100).toFixed(1)+"%"),{textAlign:"center"}),
+        TD(ce("span",{style:{color:"#4ade80"}},(vd.max*100).toFixed(1)+"%"),{textAlign:"center"}),
+        TD(ce("span",{style:{color:spreadColor,fontWeight:spreadPct>5?700:400}},(spreadPct).toFixed(1)+"%"),{textAlign:"center"}),
+        TD(ce("span",{style:{color:"#fde68a"}},(vd.stdDev*100).toFixed(2)+"%"),{textAlign:"center"}),
+        TD(ce("div",{style:{display:"flex",alignItems:"center",gap:"4px",justifyContent:"center"}},
+          ce("span",{style:{color:"#60a5fa",fontWeight:600}},vd.f4Count+"/"+vd.n),
+          ce("div",{style:{width:"30px",height:"6px",background:"#1e293b",borderRadius:"3px",overflow:"hidden"}},
+            ce("div",{style:{width:(vd.f4Count/vd.n*100)+"%",height:"100%",background:"#60a5fa",borderRadius:"3px"}})
+          )
+        ),{textAlign:"center"})
+      );
+    } else if(varData){
+      cells.push(TD("--",{textAlign:"center",borderLeft:"2px solid #1e3a5f",color:"#334155"}),TD("--",{textAlign:"center",color:"#334155"}),TD("--",{textAlign:"center",color:"#334155"}),TD("--",{textAlign:"center",color:"#334155"}),TD("--",{textAlign:"center",color:"#334155"}),TD("--",{textAlign:"center",color:"#334155"}));
+    }
+    return ce("tr",{key:team.id,style:rowStyle},cells);
   }):[];
 
   // ── CALCUTTA ROWS ─────────────────────────────────────────────────────────
@@ -859,7 +1097,6 @@ function App(){
     var price=parseFloat(calcPrices[team.id])||0;
     var isMine=!!myTeams[team.id];
     var expRet=0;ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);});
-    // EV columns only for teams I own
     var fullEv=isMine&&price>0?expRet-price:null;
     var fullEvPct=isMine&&price>0?(expRet/price-1)*100:null;
     var r1Ev=isMine&&price>0?((probs.R64||0)*RPAY.R64*unit)-price:null;
@@ -872,7 +1109,6 @@ function App(){
     var blendDollar=bEntry?bEntry.blendPct*unit:null;
     var blendPctCell=blendPctVal!==null?ce("span",{style:{color:"#e879f9",fontWeight:700}},(blendPctVal*100).toFixed(2)+"%"):ce("span",{style:{color:"#334155"}},"--");
     var blendDollarCell=blendDollar!==null?ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+blendDollar.toFixed(0)):ce("span",{style:{color:"#334155"}},"--");
-    // ML Calcutta equivalent — dogs only
     var mlCalcValCell=ce("span",{style:{color:"#334155"}},"--");
     var isFav=sm&&sm.isFav;
     if(sm&&!isFav&&simWp>0&&simWp<1){
@@ -880,7 +1116,6 @@ function App(){
       if(mlNum>0){var decOdds=(mlNum+100)/100;mlCalcValCell=ce("span",{style:{color:"#f59e0b",fontWeight:700}},"$"+Math.round(R64_PAY_AMT/decOdds));}
     }
     var rowBg=isMine?"rgba(30,64,175,0.15)":"transparent";
-    // col order: ✓ | Team | Seed | Blend | Champ% | Exp Return | Bid/Sale Price | Blend % | Blend Value | R1-Only EV | Full EV $ | Full EV% | R1 Edge | Rec | ML≡Calc
     return ce("tr",{key:team.id,style:{background:rowBg}},
       TD(ce("input",{type:"checkbox",checked:isMine,onChange:function(ev){var id=team.id,chk=ev.target.checked;setMyTeams(function(p){var n=Object.assign({},p);if(chk)n[id]=true;else delete n[id];return n;});},style:{cursor:"pointer",width:"14px",height:"14px",accentColor:"#3b82f6"}}),{textAlign:"center",width:"28px",padding:"6px 4px"}),
       TD(ce("span",{},[ce("span",{key:"r",style:{color:"#475569",marginRight:"4px",fontSize:"10px"}},team.region),team.name]),{fontWeight:isMine?700:400,whiteSpace:"nowrap",color:isMine?"#93c5fd":"#f1f5f9"}),
@@ -1001,8 +1236,8 @@ function App(){
     );
   }
 
+  // ── RENDER ────────────────────────────────────────────────────────────────
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
-    // ── HEADER ──────────────────────────────────────────────────────────────
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap"}},
         ce("span",{style:{fontSize:"22px"}},"🏀"),
@@ -1018,17 +1253,21 @@ function App(){
           ce("input",{type:"range",min:0,max:1,step:0.05,value:blendW,onChange:function(ev){setBlendW(parseFloat(ev.target.value));}}))
       )
     ),
-    // ── TAB BAR ──────────────────────────────────────────────────────────────
     ce("div",{style:{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",alignItems:"center",overflowX:"auto"}},
       tabBar.map(function(pair){return ce("button",{key:pair[0],onClick:function(){setTab(pair[0]);},style:bSt({borderRadius:0,padding:"9px 14px",whiteSpace:"nowrap",background:tab===pair[0]?"#1e40af":"transparent",color:tab===pair[0]?"#fff":pair[0]==="live"&&(gamesEntered+ffEntered>0)?"#4ade80":pair[0]==="calcutta"&&hasBlend?"#e879f9":"#94a3b8",borderBottom:tab===pair[0]?"2px solid #60a5fa":"2px solid transparent"})},pair[1]);}),
       ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center",padding:"0 12px",flexShrink:0}},
         ce("select",{value:numSims,onChange:function(ev){setNumSims(parseInt(ev.target.value));},style:sSt({fontSize:"11px",padding:"4px 8px"})},ce("option",{value:1000},"1K"),ce("option",{value:5000},"5K"),ce("option",{value:10000},"10K"),ce("option",{value:25000},"25K")),
+        ce("div",{style:{display:"flex",alignItems:"center",gap:"4px",background:"#1e293b",border:"1px solid #334155",borderRadius:"7px",padding:"3px 8px",fontSize:"11px",color:"#64748b"}},
+          ce("span",{style:{fontSize:"10px",color:"#475569"}},"seed:"),
+          ce("span",{style:{fontFamily:"monospace",fontSize:"10px",color:"#60a5fa"}},simSeed),
+          ce("button",{onClick:function(){doRunSim(false,Math.floor(Math.random()*2147483647));},title:"Randomize seed and re-run",style:{background:"none",border:"none",cursor:"pointer",color:"#60a5fa",fontSize:"14px",lineHeight:1,padding:"0 2px"}},"🎲"),
+          simSeed!==20250316?ce("button",{onClick:function(){doRunSim(false,20250316);},title:"Reset to default seed",style:{background:"none",border:"none",cursor:"pointer",color:"#475569",fontSize:"11px",lineHeight:1,padding:"0 2px"}},"↺"):null
+        ),
         ce("button",{onClick:function(){doRunSim(true);},disabled:simming,style:bSt({background:simming?"#334155":"#1d4ed8",color:"#fff",minWidth:"90px",cursor:simming?"not-allowed":"pointer"})},simming?"⏳ Running...":"▶ Run Sim")
       )
     ),
     msg?ce("div",{style:{background:"#14532d",color:"#4ade80",padding:"8px 16px",fontSize:"11px",display:"flex",justifyContent:"space-between"}},ce("span",{},msg),ce("button",{onClick:function(){setMsg("");},style:{background:"none",border:"none",color:"#86efac",cursor:"pointer",fontSize:"16px"}},"×")):null,
 
-    // ── SETUP TAB ────────────────────────────────────────────────────────────
     tab==="setup"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"12px",fontWeight:700,color:"#60a5fa"}},"Load Ratings"),ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Paste name/kenpom/torvik from Google Sheet")),
@@ -1045,7 +1284,6 @@ function App(){
       ce("div",{style:{overflowX:"auto"}},ce("table",{},ce("thead",{},ce("tr",{},TH("Region"),TH("Seed"),TH("Team"),TH("KenPom",{color:"#60a5fa"}),TH("Barthag",{color:"#a78bfa"}),TH("Sheet",{borderLeft:"1px solid #334155",color:"#f59e0b"}),TH("PG",{borderLeft:"1px solid #334155",color:"#818cf8"}),TH("Inj",{borderLeft:"1px solid #334155",color:"#ef4444"}),TH("Blended",{borderLeft:"1px solid #1e293b"}),TH(""))),ce("tbody",{},setupRows)))
     ):null,
 
-    // ── LIVE TAB ─────────────────────────────────────────────────────────────
     tab==="live"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"40px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -1066,7 +1304,6 @@ function App(){
       )
     ):null,
 
-    // ── WIN PROBS TAB ─────────────────────────────────────────────────────────
     tab==="results"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -1075,15 +1312,31 @@ function App(){
           ce("select",{value:sortBy,onChange:function(ev){setSortBy(ev.target.value);},style:sSt()},ce("option",{value:"champ"},"Champ%"),ce("option",{value:"seed"},"Seed"),ce("option",{value:"region"},"Region"),ce("option",{value:"edge"},"R1 Edge")),
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" live result(s)"):null,
           simTime?ce("span",{style:{fontSize:"10px",color:"#64748b"}},simTime+"s"):null,
-          ce("button",{onClick:function(){doRunSim(false);},disabled:simming,style:bSt({marginLeft:"auto",background:"#1d4ed8",color:"#fff"})},simming?"...":"Re-run")
+          ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center"}},
+            ce("select",{value:varCount,onChange:function(ev){setVarCount(parseInt(ev.target.value));},style:sSt({fontSize:"11px",padding:"4px 8px"})},
+              ce("option",{value:5},"5 runs"),ce("option",{value:10},"10 runs"),ce("option",{value:20},"20 runs"),ce("option",{value:50},"50 runs")
+            ),
+            ce("button",{onClick:runVarianceAnalysis,disabled:varRunning,style:bSt({background:varRunning?"#334155":"#065f46",color:varRunning?"#94a3b8":"#4ade80",border:"1px solid "+(varRunning?"#334155":"#166634"),minWidth:"110px"})},varRunning?"⏳ Running...":"📊 Variance Run"),
+            varData?ce("button",{onClick:function(){setVarData(null);},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d",fontSize:"11px",padding:"5px 10px"})},"Clear"):null,
+            ce("button",{onClick:function(){doRunSim(false);},disabled:simming,style:bSt({background:"#1d4ed8",color:"#fff"})},simming?"...":"Re-run")
+          )
         ),
         ce("div",{style:{overflowX:"auto"}},ce("table",{},
-          ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),TH("Spread",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Line%",{textAlign:"center"}),TH("Sim%",{textAlign:"center"}),TH("Edge",{textAlign:"center"}),TH("Implied$",{textAlign:"center"}),TH("Impl Sprd",{textAlign:"center"}))),
+          ce("thead",{},ce("tr",{},
+            TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),
+            TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("Champ",{textAlign:"center"}),
+            TH("Spread",{textAlign:"center",borderLeft:"1px solid #334155"}),TH("Line%",{textAlign:"center"}),TH("Sim%",{textAlign:"center"}),TH("Edge",{textAlign:"center"}),TH("Implied$",{textAlign:"center"}),TH("Impl Sprd",{textAlign:"center"}),
+            varData?TH("Avg Champ",{textAlign:"center",borderLeft:"2px solid #1e3a5f",color:"#818cf8"}):null,
+            varData?TH("Min",{textAlign:"center",color:"#f87171"}):null,
+            varData?TH("Max",{textAlign:"center",color:"#4ade80"}):null,
+            varData?TH("Spread",{textAlign:"center",color:"#fb923c"}):null,
+            varData?TH("Std Dev",{textAlign:"center",color:"#fde68a"}):null,
+            varData?TH("F4 Runs",{textAlign:"center",color:"#60a5fa"}):null
+          )),
           ce("tbody",{},resultsRows)))
       )
     ):null,
 
-    // ── CALCUTTA TAB ──────────────────────────────────────────────────────────
     tab==="calcutta"?ce("div",{style:{padding:"14px"}},
       !simResults?ce("div",{style:{textAlign:"center",padding:"50px",color:"#64748b"}},"Run simulation first."):
       ce("div",{},
@@ -1112,21 +1365,9 @@ function App(){
         ),
         ce("div",{style:{overflowX:"auto"}},ce("table",{},
           ce("thead",{},ce("tr",{},
-            TH("✓",{textAlign:"center",width:"28px",padding:"7px 4px"}),
-            TH("Team"),
-            TH("Seed"),
-            TH("Blend",{textAlign:"center",color:"#c4b5fd"}),
-            TH("Champ%",{textAlign:"center"}),
-            TH("Exp Return",{textAlign:"center"}),
-            TH("Bid / Sale Price",{textAlign:"center",borderLeft:"2px solid #78716c",color:"#fde68a"}),
-            TH("Blend %",{textAlign:"center",borderLeft:"2px solid #4a1d96",color:"#e879f9"}),
-            TH("Blend Value",{textAlign:"center",color:"#c084fc"}),
-            TH("R1-Only EV",{textAlign:"center",borderLeft:"1px solid #1e293b"}),
-            TH("Full EV $",{textAlign:"center"}),
-            TH("Full EV%",{textAlign:"center"}),
-            TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #1e293b"}),
-            TH("Rec"),
-            TH("ML≡Calc",{textAlign:"center",borderLeft:"1px solid #334155",color:"#f59e0b"})
+            TH("✓",{textAlign:"center",width:"28px",padding:"7px 4px"}),TH("Team"),TH("Seed"),TH("Blend",{textAlign:"center",color:"#c4b5fd"}),TH("Champ%",{textAlign:"center"}),TH("Exp Return",{textAlign:"center"}),
+            TH("Bid / Sale Price",{textAlign:"center",borderLeft:"2px solid #78716c",color:"#fde68a"}),TH("Blend %",{textAlign:"center",borderLeft:"2px solid #4a1d96",color:"#e879f9"}),TH("Blend Value",{textAlign:"center",color:"#c084fc"}),
+            TH("R1-Only EV",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("Full EV $",{textAlign:"center"}),TH("Full EV%",{textAlign:"center"}),TH("R1 Edge",{textAlign:"center",borderLeft:"1px solid #1e293b"}),TH("Rec"),TH("ML≡Calc",{textAlign:"center",borderLeft:"1px solid #334155",color:"#f59e0b"})
           )),
           ce("tbody",{},calcRows)
         )),
@@ -1134,7 +1375,6 @@ function App(){
       )
     ):null,
 
-    // ── COMPARE TAB ───────────────────────────────────────────────────────────
     tab==="compare"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"12px"}},
         ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"4px"}},"⚖️ Calcutta EV Comparison"),
@@ -1186,7 +1426,6 @@ function App(){
 
     tab==="history"?ce(HistTab,null):null,
 
-    // ── INJURIES TAB ──────────────────────────────────────────────────────────
     tab==="injuries"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa"}},"🏥 Tournament Injury Report"),ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},"Known injuries entering the 2026 tournament.")),
@@ -1194,7 +1433,10 @@ function App(){
       ),
       !injData&&!injLoading?ce("div",{style:{textAlign:"center",padding:"60px",color:"#64748b"}},ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"🏥"),ce("div",{style:{fontSize:"14px",fontWeight:600}},"Click Load Report to view injury data")):null,
       injData?ce("div",{},
-        ce("div",{style:{fontSize:"10px",color:"#475569",marginBottom:"10px",textAlign:"right"}},"Last updated: "+injData.timestamp),
+        ce("div",{style:{fontSize:"10px",color:injData.live?"#4ade80":"#fb923c",marginBottom:"10px",textAlign:"right",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:"6px"}},
+          ce("span",{style:{background:injData.live?"rgba(22,101,52,0.2)":"rgba(124,45,18,0.2)",color:injData.live?"#4ade80":"#fb923c",borderRadius:"10px",padding:"1px 8px",fontSize:"10px",fontWeight:700}},injData.live?"🟢 LIVE":"🟡 Static fallback"),
+          ce("span",{},injData.timestamp)
+        ),
         ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"10px"}},
           injData.teams.map(function(t){var sc=t.severity==="High"?"#f87171":t.severity==="Medium"?"#fb923c":t.severity==="Low"?"#fde68a":"#4ade80";var sb=t.severity==="High"?"rgba(127,29,29,0.2)":t.severity==="Medium"?"rgba(124,45,18,0.2)":t.severity==="Low"?"rgba(113,63,18,0.15)":"rgba(22,101,52,0.1)";return ce("div",{key:t.team,style:{background:"#1e293b",borderRadius:"8px",padding:"12px",border:"1px solid "+(t.severity==="None"?"#1e293b":"#334155")}},ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:t.injuries.length?"8px":"0"}},ce("div",{style:{fontWeight:700,fontSize:"12px"}},t.team),ce("span",{style:{fontSize:"9px",fontWeight:700,color:sc,background:sb,padding:"2px 7px",borderRadius:"10px"}},t.severity==="None"?"✓ Healthy":t.severity)),t.injuries.map(function(inj,i){var ic=inj.status==="Out"?"#f87171":inj.status==="Doubtful"?"#fb923c":inj.status==="Questionable"?"#fde68a":"#94a3b8";return ce("div",{key:i,style:{background:"#0f172a",borderRadius:"5px",padding:"6px 8px",marginTop:"4px"}},ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}},ce("span",{style:{fontWeight:600,fontSize:"11px"}},inj.player),ce("span",{style:{fontSize:"9px",color:ic,fontWeight:700}},inj.status)),ce("div",{style:{fontSize:"10px",color:"#94a3b8"}},inj.detail));}));}))
       ):null
