@@ -840,10 +840,11 @@ function App(){
         var mn=Math.min.apply(null,champVals),mx=Math.max.apply(null,champVals);
         var variance=champVals.reduce(function(s,v){return s+(v-avg)*(v-avg);},0)/champVals.length;
         var stdDev=Math.sqrt(variance);
-        // F4 Runs: count seeds where team's F4 prob > their baseline champ prob (i.e. actually showed up in F4 in some sims)
-        var baseChamp=(simResults[t.id]&&simResults[t.id].Champion)||0;
-        var f4Count=allRuns.filter(function(r){return((r[t.id]&&r[t.id].F4)||0)>baseChamp*1.5;}).length;
-        vd[t.id]={avg:avg,min:mn,max:mx,spread:mx-mn,stdDev:stdDev,f4Count:f4Count,n:varCount};
+        var f4Vals=allRuns.map(function(r){return(r[t.id]&&r[t.id].F4)||0;});
+        var f4Avg=f4Vals.reduce(function(s,v){return s+v;},0)/f4Vals.length;
+        var f4Min=Math.min.apply(null,f4Vals);
+        var f4Max=Math.max.apply(null,f4Vals);
+        vd[t.id]={avg:avg,min:mn,max:mx,spread:mx-mn,stdDev:stdDev,f4Avg:f4Avg,f4Min:f4Min,f4Max:f4Max,n:varCount};
       });
       setVarData(vd);
       setVarRunning(false);
@@ -895,17 +896,18 @@ function App(){
           var gk=reg+"_"+roundLabel+"_"+mi;
           var winnerId=liveWinners[gk]||null;
           if(!winnerId){
-            // Use per-team spread keys so each team's spread is always from their own perspective
-            var lkA=tA.id+"_"+tB.id;
-            var lkB=tB.id+"_"+tA.id;
-            var spA=lines[lkA]!==""&&lines[lkA]!==undefined?parseFloat(lines[lkA]):null;
-            var spB=lines[lkB]!==""&&lines[lkB]!==undefined?parseFloat(lines[lkB]):null;
-            // Prefer whichever key has a value; if both, use the one for the team being mapped
-            var lineWpA=spA!==null&&!isNaN(spA)?sp2wp(spA):spB!==null&&!isNaN(spB)?sp2wp(-spB):null;
-            var lineWpB=spB!==null&&!isNaN(spB)?sp2wp(spB):spA!==null&&!isNaN(spA)?sp2wp(-spA):null;
-            var isFavA=lineWpA!==null&&lineWpA>0.5;
-            map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lkA,lineWp:lineWpA,isFav:isFavA,alive:true,decided:false};
-            map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lkB,lineWp:lineWpB,isFav:lineWpB!==null&&lineWpB>0.5,alive:true,decided:false};
+            // Shared key — always smallerId_largerId so both teams reference same stored value
+            var idLo=Math.min(tA.id,tB.id),idHi=Math.max(tA.id,tB.id);
+            var lkShared=idLo+"_"+idHi;
+            // The stored value is always from idLo's perspective (negative = idLo is fav)
+            var spRaw=lines[lkShared]!==""&&lines[lkShared]!==undefined?parseFloat(lines[lkShared]):null;
+            var lineWpLo=spRaw!==null&&!isNaN(spRaw)?sp2wp(spRaw):null;
+            var lineWpHi=lineWpLo!==null?1-lineWpLo:null;
+            var lineWpA=tA.id===idLo?lineWpLo:lineWpHi;
+            var lineWpB=tA.id===idLo?lineWpHi:lineWpLo;
+            // lineKey for the spread input cell: stores as idLo perspective, but input shows from THAT team's perspective
+            map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lkShared,lineWpRaw:spRaw,isLo:tA.id===idLo,lineWp:lineWpA,isFav:lineWpA!==null&&lineWpA>0.5,alive:true,decided:false};
+            map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lkShared,lineWpRaw:spRaw,isLo:tB.id===idLo,lineWp:lineWpB,isFav:lineWpB!==null&&lineWpB>0.5,alive:true,decided:false};
             currentWinners.push(null);
           } else {
             var winner=teams.filter(function(t){return t.id===winnerId;})[0]||null;
@@ -1046,10 +1048,28 @@ function App(){
       spreadCell=ce("span",{style:{color:"#334155",fontSize:"10px"}},"—");
     } else if(lm&&lm.opp&&!lm.decided){
       var lk=lm.lineKey;
-      var curVal=lines[lk]||"";
+      // Display spread from THIS team's perspective; stored value is from the lo-id team's perspective
+      var storedVal=lines[lk];
+      var displayVal="";
+      if(storedVal!==""&&storedVal!==undefined){
+        var sv=parseFloat(storedVal);
+        if(!isNaN(sv))displayVal=lm.isLo?String(storedVal):(sv===0?"0":String(-sv));
+      }
       spreadCell=ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px",alignItems:"center"}},
         ce("span",{style:{fontSize:"9px",color:"#64748b"}},"vs #"+lm.opp.seed+" "+lm.opp.name.split(" ")[0]),
-        ce("input",{type:"number",placeholder:"-14.5",value:curVal,onChange:function(ev){var v=ev.target.value,k=lk;setLines(function(prev){var n=Object.assign({},prev);n[k]=v;return n;});},style:iSt({width:"70px"})})
+        ce("input",{type:"number",placeholder:"-14.5",value:displayVal,onChange:function(ev){
+          var v=ev.target.value,k=lk,isLo=lm.isLo;
+          setLines(function(prev){
+            var n=Object.assign({},prev);
+            if(v===""||v===undefined){delete n[k];}
+            else{
+              var num=parseFloat(v);
+              // Always store from lo-id perspective
+              n[k]=isNaN(num)?"":String(isLo?num:-num);
+            }
+            return n;
+          });
+        },style:iSt({width:"70px"})})
       );
     } else {
       spreadCell=ce("span",{style:{color:"#475569",fontSize:"10px"}},lm&&lm.opp?"vs "+lm.opp.name:"--");
@@ -1092,11 +1112,9 @@ function App(){
         TD(ce("span",{style:{color:"#4ade80"}},(vd.max*100).toFixed(1)+"%"),{textAlign:"center"}),
         TD(ce("span",{style:{color:spreadColor,fontWeight:spreadPct>5?700:400}},(spreadPct).toFixed(1)+"%"),{textAlign:"center"}),
         TD(ce("span",{style:{color:"#fde68a"}},(vd.stdDev*100).toFixed(2)+"%"),{textAlign:"center"}),
-        TD(ce("div",{style:{display:"flex",alignItems:"center",gap:"4px",justifyContent:"center"}},
-          ce("span",{style:{color:"#60a5fa",fontWeight:600}},vd.f4Count+"/"+vd.n),
-          ce("div",{style:{width:"30px",height:"6px",background:"#1e293b",borderRadius:"3px",overflow:"hidden"}},
-            ce("div",{style:{width:(vd.f4Count/vd.n*100)+"%",height:"100%",background:"#60a5fa",borderRadius:"3px"}})
-          )
+        TD(ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}},
+          ce("span",{style:{color:"#60a5fa",fontWeight:600}},(vd.f4Avg*100).toFixed(1)+"%"),
+          ce("span",{style:{fontSize:"8px",color:"#475569"}},(vd.f4Min*100).toFixed(0)+"–"+(vd.f4Max*100).toFixed(0)+"%")
         ),{textAlign:"center"})
       );
     } else if(varData){
@@ -1346,7 +1364,7 @@ function App(){
             varData?TH("Max",{textAlign:"center",color:"#4ade80"}):null,
             varData?TH("Spread",{textAlign:"center",color:"#fb923c"}):null,
             varData?TH("Std Dev",{textAlign:"center",color:"#fde68a"}):null,
-            varData?TH("F4 Runs",{textAlign:"center",color:"#60a5fa"}):null
+            varData?TH("F4 Avg%",{textAlign:"center",color:"#60a5fa"}):null
           )),
           ce("tbody",{},resultsRows)))
       )
