@@ -594,6 +594,8 @@ function App(){
   var _futureRaw=useState(""),futureRaw=_futureRaw[0],setFutureRaw=_futureRaw[1];
   var _histAnalysis=useState(null),histAnalysis=_histAnalysis[0],setHistAnalysis=_histAnalysis[1];
   var _histLoading=useState(false),histLoading=_histLoading[0],setHistLoading=_histLoading[1];
+  var _survivorPicks=useState({}),survivorPicks=_survivorPicks[0],setSurvivorPicks=_survivorPicks[1];
+  // survivorPicks: {slotKey: teamId}
 
   // ── REFS ──────────────────────────────────────────────────────────────────
   var saveTimer=useRef(null);
@@ -1206,7 +1208,350 @@ function App(){
 
   if(!hydrated)return ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},"Loading...");
 
-  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["history","📜 History"],["injuries","🏥 Injuries"]];
+  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["history","📜 History"],["injuries","🏥 Injuries"],["survivor","🎯 Survivor"]];
+
+  // ── SURVIVOR TAB ──────────────────────────────────────────────────────────
+  var SURVIVOR_SLOTS=[
+    {key:"r64_thu_1",label:"R64 Thu #1",day:"Thu Mar 19",round:"R64",regions:["South","East"],pick:1},
+    {key:"r64_thu_2",label:"R64 Thu #2",day:"Thu Mar 19",round:"R64",regions:["South","East"],pick:2},
+    {key:"r64_fri_1",label:"R64 Fri #1",day:"Fri Mar 20",round:"R64",regions:["West","Midwest"],pick:1},
+    {key:"r64_fri_2",label:"R64 Fri #2",day:"Fri Mar 20",round:"R64",regions:["West","Midwest"],pick:2},
+    {key:"r32_sat",label:"R32 Sat",day:"Sat Mar 21",round:"R32",regions:["South","East"],pick:1},
+    {key:"r32_sun",label:"R32 Sun",day:"Sun Mar 22",round:"R32",regions:["West","Midwest"],pick:1},
+    {key:"s16_thu",label:"S16 Thu",day:"Thu Mar 26",round:"S16",regions:["South","East"],pick:1},
+    {key:"s16_fri",label:"S16 Fri",day:"Fri Mar 27",round:"S16",regions:["West","Midwest"],pick:1},
+    {key:"e8_1",label:"E8 Pick 1",day:"Sat/Sun Mar 28-29",round:"E8",regions:["South","East","West","Midwest"],pick:1},
+    {key:"e8_2",label:"E8 Pick 2",day:"Sat/Sun Mar 28-29",round:"E8",regions:["South","East","West","Midwest"],pick:2},
+    {key:"f4",label:"Final Four",day:"Sat Apr 4",round:"F4",regions:["South","East","West","Midwest"],pick:1},
+    {key:"ncg",label:"Championship",day:"Mon Apr 6",round:"Champion",regions:["South","East","West","Midwest"],pick:1},
+  ];
+  var ROUND_ORDER=["R64","R32","S16","E8","F4","Champion"];
+  // Default popularity by seed for proxy
+  var SEED_POP={"R64":{1:0.40,2:0.20,3:0.12,4:0.08,5:0.06,6:0.04,7:0.03,8:0.02,9:0.02,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
+    "R32":{1:0.45,2:0.22,3:0.14,4:0.09,5:0.05,6:0.03,7:0.02,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
+    "S16":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
+    "E8":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
+    "F4":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001},
+    "Champion":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001}
+  };
+
+  function SurvivorTab(){
+    var _survMode=useState("chalk"),survMode=_survMode[0],setSurvMode=_survMode[1];
+    var _popMap=useState({}),popMap=_popMap[0],setPopMap=_popMap[1];
+    // popMap: {teamId_round: pct} e.g. {"17_R64": 0.45}
+
+    function getWinProb(team,round){
+      if(!simResults||!simResults[team.id])return 0;
+      var p=simResults[team.id];
+      var cum={"R64":p.R64||0,"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"Champion":p.Champion||0};
+      var prev={"R64":1,"R32":p.R64||0,"S16":p.R32||0,"E8":p.S16||0,"F4":p.E8||0,"Champion":p.F4||0};
+      var pr=prev[round]||1;
+      return pr>0.001?Math.min(0.99,cum[round]/pr):0;
+    }
+    function getPopularity(team,round){
+      var k=team.id+"_"+round;
+      if(popMap[k]!==undefined)return popMap[k];
+      return(SEED_POP[round]&&SEED_POP[round][team.seed])||0.01;
+    }
+    function getFutureValue(team,afterRound){
+      if(!simResults||!simResults[team.id])return 0;
+      var idx=ROUND_ORDER.indexOf(afterRound);
+      var fv=0;
+      for(var i=idx+1;i<ROUND_ORDER.length;i++){
+        fv+=getWinProb(team,ROUND_ORDER[i])*Math.pow(1.4,i-idx);
+      }
+      return fv;
+    }
+    function getEligible(slot,usedIds){
+      return teams.filter(function(t){
+        if(slot.regions.indexOf(t.region)<0)return false;
+        if(usedIds[t.id])return false;
+        if(slot.round!=="R64"){
+          var p=simResults&&simResults[t.id];
+          if(!p)return false;
+          var cum={"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"Champion":p.Champion||0};
+          if((cum[slot.round]||0)<0.001)return false;
+          var lm=liveMatchupMap[t.id];
+          if(lm&&lm.alive===false)return false;
+        }
+        return true;
+      });
+    }
+    function getTeam(id){return teams.filter(function(t){return t.id===id;})[0]||null;}
+    function pickColor(wp){return wp>=0.85?"#4ade80":wp>=0.70?"#86efac":wp>=0.55?"#fde68a":"#fb923c";}
+
+    // ── STRATEGY ENGINES ────────────────────────────────────────────────────
+    // Strategy 1: Chalk — maximize P(survive all rounds), work backwards
+    // Work backwards: NCG → F4 → E8 → ... assigning best available team per slot
+    function chalkPath(){
+      var usedIds={};
+      var result={};
+      var slots=SURVIVOR_SLOTS.slice().reverse(); // NCG first
+      slots.forEach(function(slot){
+        if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
+        var eligible=getEligible(slot,usedIds);
+        if(!eligible.length){result[slot.key]=null;return;}
+        var best=eligible.slice().sort(function(a,b){return getWinProb(b,slot.round)-getWinProb(a,slot.round);})[0];
+        result[slot.key]=best.id;
+        usedIds[best.id]=true;
+      });
+      return result;
+    }
+
+    // Strategy 2: Contrarian — maximize win prob × (1 - popularity), per-round
+    function contrPath(){
+      var usedIds={};
+      var result={};
+      var slots=SURVIVOR_SLOTS.slice().reverse();
+      slots.forEach(function(slot){
+        if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
+        var eligible=getEligible(slot,usedIds);
+        if(!eligible.length){result[slot.key]=null;return;}
+        var best=eligible.slice().sort(function(a,b){
+          var sa=getWinProb(a,slot.round)*(1-getPopularity(a,slot.round));
+          var sb=getWinProb(b,slot.round)*(1-getPopularity(b,slot.round));
+          return sb-sa;
+        })[0];
+        result[slot.key]=best.id;
+        usedIds[best.id]=true;
+      });
+      return result;
+    }
+
+    // Strategy 3A: Sim Backwards — start from most likely champion, work back
+    function simBackPath(){
+      var usedIds={};
+      var result={};
+      var slots=SURVIVOR_SLOTS.slice().reverse();
+      slots.forEach(function(slot){
+        if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
+        var eligible=getEligible(slot,usedIds);
+        if(!eligible.length){result[slot.key]=null;return;}
+        // Use cumulative sim prob for the slot's round (not conditional) to preserve champ path
+        var best=eligible.slice().sort(function(a,b){
+          var pa=simResults&&simResults[a.id]?simResults[a.id][slot.round]||0:0;
+          var pb=simResults&&simResults[b.id]?simResults[b.id][slot.round]||0:0;
+          return pb-pa;
+        })[0];
+        result[slot.key]=best.id;
+        usedIds[best.id]=true;
+      });
+      return result;
+    }
+
+    // Strategy 3B: Sim Forward — greedy conditional win prob each round
+    function simFwdPath(){
+      var usedIds={};
+      var result={};
+      SURVIVOR_SLOTS.forEach(function(slot){
+        if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
+        var eligible=getEligible(slot,usedIds);
+        if(!eligible.length){result[slot.key]=null;return;}
+        var best=eligible.slice().sort(function(a,b){return getWinProb(b,slot.round)-getWinProb(a,slot.round);})[0];
+        result[slot.key]=best.id;
+        usedIds[best.id]=true;
+      });
+      return result;
+    }
+
+    function pathProb(path){
+      var p=1;
+      SURVIVOR_SLOTS.forEach(function(slot){
+        var tid=path[slot.key];
+        if(tid){var t=getTeam(tid);if(t)p*=getWinProb(t,slot.round);}
+      });
+      return p;
+    }
+
+    var chalk=simResults?chalkPath():{};
+    var contr=simResults?contrPath():{};
+    var simBack=simResults?simBackPath():{};
+    var simFwd=simResults?simFwdPath():{};
+    var myPath=survMode==="chalk"?chalk:survMode==="contr"?contr:survMode==="simback"?simBack:simFwd;
+
+    var usedIds={};
+    Object.values(survivorPicks).forEach(function(tid){if(tid)usedIds[tid]=true;});
+
+    // ── STRATEGY CARDS ──────────────────────────────────────────────────────
+    function StratCard(props){
+      var path=props.path,label=props.label,color=props.color,desc=props.desc,modeKey=props.modeKey;
+      var prob=pathProb(path);
+      var isActive=survMode===modeKey;
+      return ce("div",{
+        onClick:function(){setSurvMode(modeKey);},
+        style:{flex:"1",minWidth:"180px",background:isActive?"rgba("+color+",0.15)":"#111827",borderRadius:"10px",padding:"12px",border:"2px solid "+(isActive?"rgba("+color+",0.8)":"#1e293b"),cursor:"pointer",transition:"all 0.15s"}},
+        ce("div",{style:{fontSize:"11px",fontWeight:700,color:"rgb("+color+")",marginBottom:"4px"}},label),
+        ce("div",{style:{fontSize:"9px",color:"#64748b",marginBottom:"8px",lineHeight:1.5}},desc),
+        ce("div",{style:{fontSize:"22px",fontWeight:700,color:prob>0.3?"#4ade80":prob>0.1?"#fde68a":"#fb923c",marginBottom:"6px"}},(prob*100).toFixed(1)+"%"),
+        ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px"}},
+          SURVIVOR_SLOTS.map(function(slot){
+            var tid=path[slot.key];var t=tid?getTeam(tid):null;
+            var wp=t?getWinProb(t,slot.round):0;
+            return ce("div",{key:slot.key,style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"9px",padding:"1px 0",borderBottom:"1px solid #0f172a"}},
+              ce("span",{style:{color:"#475569",minWidth:"52px"}},slot.label),
+              ce("span",{style:{color:"#f1f5f9",fontWeight:600,flex:1,marginLeft:"4px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t?t.name:"--"),
+              ce("span",{style:{color:pickColor(wp),fontWeight:700,marginLeft:"4px"}},t?(wp*100).toFixed(0)+"%":"")
+            );
+          })
+        )
+      );
+    }
+
+    var dayGroups=[
+      {label:"R64 — Thu Mar 19",slots:["r64_thu_1","r64_thu_2"],color:"#1e40af"},
+      {label:"R64 — Fri Mar 20",slots:["r64_fri_1","r64_fri_2"],color:"#1e40af"},
+      {label:"R32 — Sat Mar 21",slots:["r32_sat"],color:"#6d28d9"},
+      {label:"R32 — Sun Mar 22",slots:["r32_sun"],color:"#6d28d9"},
+      {label:"S16 — Thu Mar 26",slots:["s16_thu"],color:"#0e7490"},
+      {label:"S16 — Fri Mar 27",slots:["s16_fri"],color:"#0e7490"},
+      {label:"E8 — Sat/Sun Mar 28-29",slots:["e8_1","e8_2"],color:"#92400e"},
+      {label:"Final Four — Sat Apr 4",slots:["f4"],color:"#166534"},
+      {label:"Championship — Mon Apr 6",slots:["ncg"],color:"#166534"},
+    ];
+
+    var myProb=pathProb(myPath);
+
+    return ce("div",{style:{padding:"14px"}},
+      // Header
+      ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",border:"1px solid #334155",display:"flex",gap:"16px",alignItems:"center",flexWrap:"wrap"}},
+        ce("div",{style:{flex:1}},
+          ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#f59e0b",marginBottom:"2px"}},"🎯 Survivor Pool Optimizer"),
+          ce("div",{style:{fontSize:"10px",color:"#64748b"}},"10 picks · each team once · 3 strategy paths · click a strategy to use it as your picks guide")
+        ),
+        !simResults?ce("span",{style:{fontSize:"11px",color:"#f87171"}},"⚠ Run simulation first"):
+        ce("div",{style:{display:"flex",gap:"16px",alignItems:"center"}},
+          ce("div",{},ce("div",{style:{fontSize:"10px",color:"#94a3b8",marginBottom:"2px"}},"Your Path Odds"),ce("div",{style:{fontSize:"22px",fontWeight:700,color:myProb>0.3?"#4ade80":myProb>0.1?"#fde68a":"#f87171"}},(myProb*100).toFixed(1)+"%")),
+          ce("button",{onClick:function(){setSurvivorPicks({});},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d",fontSize:"11px"})},"Reset Picks")
+        )
+      ),
+      !simResults?ce("div",{style:{textAlign:"center",padding:"60px",color:"#64748b"}},ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"🎯"),ce("div",{style:{fontSize:"13px",fontWeight:600}},"Run simulation first")):
+      ce("div",{},
+        // Strategy cards
+        ce("div",{style:{display:"flex",gap:"10px",marginBottom:"14px",flexWrap:"wrap"}},
+          ce(StratCard,{path:chalk,label:"1 — Chalk Path 🏆",color:"74,222,128",desc:"Max P(survive all 10). Works backwards from most likely champion. Pure probability.",modeKey:"chalk"}),
+          ce(StratCard,{path:contr,label:"2 — Contrarian Path 🎭",color:"251,191,36",desc:"Win prob × (1 − popularity). Finds high-probability picks the field avoids. Edit % below.",modeKey:"contr"}),
+          ce(StratCard,{path:simBack,label:"3A — Sim Backwards 📊",color:"129,140,248",desc:"Your sim output, backwards from your most likely champion down through all rounds.",modeKey:"simback"}),
+          ce(StratCard,{path:simFwd,label:"3B — Sim Forward 📊",color:"192,132,252",desc:"Your sim output, greedy forward — best conditional win prob each round in order.",modeKey:"simfwd"})
+        ),
+
+        // Popularity editor (only shown for contrarian)
+        survMode==="contr"?ce("div",{style:{background:"#111827",borderRadius:"8px",padding:"12px",marginBottom:"12px",border:"1px solid #334155"}},
+          ce("div",{style:{fontSize:"11px",fontWeight:700,color:"#fbbf24",marginBottom:"8px"}},"📊 Edit Pick Popularity % per Team/Round (pre-filled with seed-based proxy)"),
+          ce("div",{style:{fontSize:"9px",color:"#64748b",marginBottom:"8px"}},"Enter % of pool entries expected to pick each team in each round. Higher = more crowded. Leave blank to use seed proxy."),
+          ce("div",{style:{overflowX:"auto"}},ce("table",{},
+            ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("NCG",{textAlign:"center"}))),
+            ce("tbody",{},teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);}).map(function(t){
+              return ce("tr",{key:t.id},
+                TD(ce("span",{style:{fontSize:"10px",fontWeight:600}},t.name)),
+                TD(badge(t.seed)),
+                ["R64","R32","S16","E8","F4","Champion"].map(function(r){
+                  var k=t.id+"_"+r;
+                  var proxy=SEED_POP[r]&&SEED_POP[r][t.seed]?Math.round((SEED_POP[r][t.seed])*100):"";
+                  var cur=popMap[k]!==undefined?Math.round(popMap[k]*100):"";
+                  return TD(ce("input",{key:r,type:"number",min:"0",max:"100",placeholder:proxy,value:cur,
+                    onChange:function(ev){var v=ev.target.value,kk=k;setPopMap(function(p){var n=Object.assign({},p);if(v===""||v===undefined)delete n[kk];else n[kk]=parseFloat(v)/100;return n;});},
+                    style:iSt({width:"44px",fontSize:"10px"})}),{textAlign:"center"});
+                })
+              );
+            }))
+          ))
+        ):null,
+
+        // Pick slots
+        ce("div",{style:{display:"flex",flexDirection:"column",gap:"8px"}},
+          dayGroups.map(function(dg){
+            return ce("div",{key:dg.label,style:{background:"#111827",borderRadius:"10px",border:"1px solid #1e293b",overflow:"hidden"}},
+              ce("div",{style:{background:dg.color+"22",borderBottom:"1px solid "+dg.color+"44",padding:"7px 14px"}},
+                ce("span",{style:{fontSize:"11px",fontWeight:700,color:"#f1f5f9"}},dg.label)
+              ),
+              ce("div",{style:{padding:"8px",display:"flex",gap:"8px",flexWrap:"wrap"}},
+                dg.slots.map(function(sk){
+                  var slot=SURVIVOR_SLOTS.filter(function(s){return s.key===sk;})[0];
+                  if(!slot)return null;
+                  var lockedTid=survivorPicks[slot.key]||null;
+                  var recTid=myPath[slot.key]||null;
+                  var eligible=getEligible(slot,{});
+                  var scored=eligible.map(function(t){
+                    var wp=getWinProb(t,slot.round);
+                    var pop=getPopularity(t,slot.round);
+                    var fv=getFutureValue(t,slot.round);
+                    var contrScore=wp*(1-pop);
+                    var isUsed=!!usedIds[t.id]&&t.id!==lockedTid;
+                    return{team:t,wp:wp,pop:pop,fv:fv,contrScore:contrScore,isUsed:isUsed};
+                  }).sort(function(a,b){
+                    if(survMode==="contr")return b.contrScore-a.contrScore;
+                    return b.wp-a.wp;
+                  });
+                  var top=scored.slice(0,8);
+                  return ce("div",{key:sk,style:{flex:"1",minWidth:"190px",background:"#1e293b",borderRadius:"8px",padding:"8px",border:"1px solid "+(lockedTid?"#166534":"#334155")}},
+                    ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
+                      ce("span",{style:{fontSize:"10px",fontWeight:700,color:"#94a3b8"}},slot.label),
+                      lockedTid?ce("button",{onClick:function(){var k=sk;setSurvivorPicks(function(p){var n=Object.assign({},p);delete n[k];return n;});},style:{fontSize:"9px",padding:"1px 6px",background:"#3b1a1a",color:"#fca5a5",border:"none",borderRadius:"3px",cursor:"pointer"}},"Clear"):
+                      recTid?ce("span",{style:{fontSize:"9px",color:"#60a5fa"}},"★ "+(getTeam(recTid)||{name:"?"}).name):null
+                    ),
+                    ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px"}},
+                      top.map(function(s){
+                        var t=s.team;
+                        var isLocked=lockedTid===t.id;
+                        var isRec=!lockedTid&&recTid===t.id;
+                        var isUsedElsewhere=usedIds[t.id]&&!isLocked;
+                        return ce("div",{key:t.id,
+                          onClick:function(){if(isUsedElsewhere)return;var k=sk,tid=t.id;setSurvivorPicks(function(p){var n=Object.assign({},p);if(n[k]===tid)delete n[k];else n[k]=tid;return n;});},
+                          style:{display:"flex",alignItems:"center",gap:"5px",padding:"4px 7px",borderRadius:"5px",cursor:isUsedElsewhere?"not-allowed":"pointer",
+                            background:isLocked?"rgba(22,101,52,0.35)":isRec?"rgba(30,64,175,0.25)":"rgba(255,255,255,0.02)",
+                            opacity:isUsedElsewhere?0.25:1,
+                            border:"1px solid "+(isLocked?"#166534":isRec?"#1e40af":"transparent")}},
+                          badge(t.seed),
+                          ce("span",{style:{flex:1,fontSize:"10px",fontWeight:isLocked||isRec?700:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.name),
+                          ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"0px"}},
+                            ce("span",{style:{fontSize:"10px",fontWeight:700,color:pickColor(s.wp)}},(s.wp*100).toFixed(1)+"%"),
+                            survMode==="contr"?ce("span",{style:{fontSize:"8px",color:"#475569"}},(s.pop*100).toFixed(0)+"% pop"):
+                            ce("span",{style:{fontSize:"8px",color:"#475569"}},"FV:"+(s.fv).toFixed(1))
+                          ),
+                          isLocked?ce("span",{style:{fontSize:"9px",color:"#4ade80",fontWeight:700}},"✓"):
+                          isRec?ce("span",{style:{fontSize:"9px",color:"#60a5fa",fontWeight:700}},"★"):null
+                        );
+                      })
+                    )
+                  );
+                })
+              )
+            );
+          }),
+          // Summary strip
+          ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"10px 12px",border:"1px solid #334155"}},
+            ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#94a3b8",marginBottom:"6px"}},"Your Full Plan ("+(survMode==="chalk"?"Chalk":survMode==="contr"?"Contrarian":survMode==="simback"?"Sim Backwards":"Sim Forward")+" path · locked picks shown in green)"),
+            ce("div",{style:{display:"flex",gap:"5px",flexWrap:"wrap"}},
+              SURVIVOR_SLOTS.map(function(slot){
+                var tid=survivorPicks[slot.key]||myPath[slot.key];
+                var t=tid?getTeam(tid):null;
+                var wp=t?getWinProb(t,slot.round):0;
+                var isLocked=!!survivorPicks[slot.key];
+                return ce("div",{key:slot.key,style:{background:"#0f172a",borderRadius:"6px",padding:"5px 8px",minWidth:"90px",border:"1px solid "+(isLocked?"#166534":"#1e3a5f")}},
+                  ce("div",{style:{fontSize:"8px",color:"#475569",marginBottom:"1px"}},slot.label),
+                  t?ce("div",{},
+                    ce("div",{style:{fontSize:"10px",fontWeight:700,color:isLocked?"#4ade80":"#93c5fd",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.name),
+                    ce("div",{style:{fontSize:"9px",color:pickColor(wp),fontWeight:600}},(wp*100).toFixed(1)+"%")
+                  ):ce("div",{style:{fontSize:"9px",color:"#334155"}},"--")
+                );
+              })
+            ),
+            ce("div",{style:{marginTop:"8px",display:"flex",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
+              ce("span",{style:{fontSize:"9px",color:"#64748b"}},"✓ locked · ★ recommended · click to lock/unlock"),
+              ce("div",{style:{marginLeft:"auto",display:"flex",gap:"12px",alignItems:"center"}},
+                [["chalk","#4ade80",chalk],["contr","#fbbf24",contr],["simback","#818cf8",simBack],["simfwd","#c084fc",simFwd]].map(function(arr){
+                  return ce("div",{key:arr[0],style:{textAlign:"center"}},
+                    ce("div",{style:{fontSize:"8px",color:arr[1]}},arr[0]==="chalk"?"Chalk":arr[0]==="contr"?"Contr":arr[0]==="simback"?"SimBack":"SimFwd"),
+                    ce("div",{style:{fontSize:"12px",fontWeight:700,color:arr[1]}},(pathProb(arr[2])*100).toFixed(1)+"%")
+                  );
+                })
+              )
+            )
+          )
+        )
+      )
+    );
+  }
 
   // ── HISTORY TAB ───────────────────────────────────────────────────────────
   function HistTab(){
@@ -1457,7 +1802,7 @@ function App(){
       ):ce("div",{style:{textAlign:"center",padding:"50px",color:"#475569"}},ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"⚖️"),ce("div",{style:{fontSize:"13px",fontWeight:600}},"Paste data and click Compare"))
     ):null,
 
-    tab==="history"?ce(HistTab,null):null,
+    tab==="survivor"?ce(SurvivorTab,null):null,
 
     tab==="injuries"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
