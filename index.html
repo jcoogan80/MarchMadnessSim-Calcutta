@@ -26,327 +26,327 @@ td{padding:7px 8px;font-size:11px;border-bottom:1px solid #111827}
 var ce=React.createElement,useState=React.useState,useEffect=React.useEffect,useMemo=React.useMemo,useRef=React.useRef;
 
 // ── HISTORICAL DATA ──────────────────────────────────────────────────────────
-var HIST_RAW=`year\tTeam\tRegion\tSeed\tPurchaser\tPurchase Price
-2023\tAlabama\tSouth\t1\tGamboney\t7100
-2023\tPurdue\tEast\t1\tDonkey\t6000
-2023\tHouston\tMidwest\t1\tTeam US\t6500
-2023\tKansas\tWest\t1\tSC Garage\t6000
-2023\tArizona\tSouth\t2\tDonkey\t4500
-2023\tMarquette\tEast\t2\tSC Garage\t4200
-2023\tTexas\tMidwest\t2\tChamps\t4900
-2023\tUCLA\tWest\t2\tSC Garage\t4400
-2023\tBaylor\tSouth\t3\tTeam US\t2300
-2023\tKansas St\tEast\t3\tRhinos\t2500
-2023\tXavier\tMidwest\t3\tGamboney\t2950
-2023\tGonzaga\tWest\t3\tWhite Boy\t3800
-2023\tVirginia\tSouth\t4\tSC Garage\t1800
-2023\tTennessee\tEast\t4\tChamps\t2100
-2023\tIndiana\tMidwest\t4\tRhinos\t1650
-2023\tUconn\tWest\t4\tTeam US\t3800
-2023\tSan Diego St\tSouth\t5\tChamps\t1800
-2023\tDuke\tEast\t5\tWhite Boy\t3200
-2023\tMiami\tMidwest\t5\tRhinos\t1100
-2023\tSaint Marys\tWest\t5\tWhite Boy\t1200
-2023\tCreighton\tSouth\t6\tTeam US\t1700
-2023\tKentucky\tEast\t6\tChamps\t1900
-2023\tIowa St\tMidwest\t6\tChamps\t1000
-2023\tTCU\tWest\t6\tGamboney\t1700
-2023\tMissouri\tSouth\t7\tDonkey\t900
-2023\tMichigan St\tEast\t7\tChamps\t1500
-2023\tTexas A&M\tMidwest\t7\tWhite Boy\t1700
-2023\tNorthwestern\tWest\t7\tTeam US\t900
-2023\tMaryland\tSouth\t8\tTeam US\t750
-2023\tMemphis\tEast\t8\tTeam US\t1350
-2023\tIowa\tMidwest\t8\tRhinos\t800
-2023\tArkansas\tWest\t8\tPrestige\t1200
-2023\tWest Virginia\tSouth\t9\tRhinos\t1150
-2023\tFAU\tEast\t9\tChamps\t750
-2023\tAuburn\tMidwest\t9\tPrestige\t950
-2023\tIllinois\tWest\t9\tWhite Boy\t750
-2023\tUtah State\tSouth\t10\tRhinos\t1200
-2023\tUSC\tEast\t10\tRhinos\t950
-2023\tPenn State\tMidwest\t10\tRhinos\t1000
-2023\tBoise St\tWest\t10\tRhinos\t900
-2023\tNC State\tSouth\t11\tDonkey\t800
-2023\tProvidence\tEast\t11\tRhinos\t800
-2023\tMSST/PITT\tMidwest\t11\tRhinos\t1000
-2023\tASU/NEV\tWest\t11\tRhinos\t700
-2023\tCharleston\tSouth\t12\tDonkey\t950
-2023\tOral Roberts\tEast\t12\tDonkey\t600
-2023\tDrake\tMidwest\t12\tPrestige\t1100
-2023\tVCU\tWest\t12\tTeam US\t850
-2023\tFurman\tSouth\t13\tChamps\t550
-2023\tLouisiana\tEast\t13\tChamps\t375
-2023\tKent State\tMidwest\t13\tDonkey\t800
-2023\tIona\tWest\t13\tPrestige\t450
-2023\tUCSB\tSouth\t14\tPrestige\t250
-2023\tMontana St\tEast\t14\tPrestige\t200
-2023\tKennesaw St\tMidwest\t14\tDonkey\t250
-2023\tGrand Canyon\tWest\t14\tSC Garage\t250
-2023\tPrinceton\tSouth\t15\tDonkey\t275
-2023\tVermont\tEast\t15\tPrestige\t350
-2023\tColgate\tMidwest\t15\tWhite Boy\t250
-2023\tUNC Asheville\tWest\t15\tDonkey\t170
-2023\tAMCC/SMO\tSouth\t16\tDonkey\t300
-2023\tTXSO/FDU\tEast\t16\tChamps\t225
-2023\tN Kentucky\tMidwest\t16\tDonkey\t375
-2023\tHoward\tWest\t16\tDonkey\t300
-2022\tGonzaga\tWest\t1\tTeam US\t7000
-2022\tBaylor\tEast\t1\tDick\t4500
-2022\tArizona\tSouth\t1\tSC Garage\t6300
-2022\tKansas\tMidwest\t1\tDick\t5000
-2022\tDuke\tWest\t2\tGamboney\t2600
-2022\tKentucky\tEast\t2\tChamps\t5600
-2022\tVillanova\tSouth\t2\tMaurer\t3500
-2022\tAuburn\tMidwest\t2\tChamps\t3900
-2022\tTexas Tech\tWest\t3\tDonkey\t3200
-2022\tPurdue\tEast\t3\tGamboney\t3400
-2022\tTennessee\tSouth\t3\tRhinos\t4000
-2022\tWisconsin\tMidwest\t3\tSC Garage\t1900
-2022\tArkansas\tWest\t4\tDick\t1800
-2022\tUCLA\tEast\t4\tMaurer\t3650
-2022\tIllinois\tSouth\t4\tDonkey\t2000
-2022\tProvidence\tMidwest\t4\tDick\t800
-2022\tConnecticut\tWest\t5\tChamps\t1500
-2022\tSaint Marys\tEast\t5\tRhinos\t1450
-2022\tHouston\tSouth\t5\tPrestige\t2800
-2022\tIowa\tMidwest\t5\tPrestige\t3000
-2022\tAlabama\tWest\t6\tTeam US\t750
-2022\tTexas\tEast\t6\tCheeseBox\t800
-2022\tColorado State\tSouth\t6\tTeam US\t900
-2022\tLSU\tMidwest\t6\tRhinos\t1350
-2022\tMichigan State\tWest\t7\tRhinos\t1400
-2022\tMurray State\tEast\t7\tCheeseBox\t850
-2022\tOhio State\tSouth\t7\tChamps\t900
-2022\tUSC\tMidwest\t7\tTeam US\t950
-2022\tBoise State\tWest\t8\tTeam US\t600
-2022\tNorth Carolina\tEast\t8\tTeam US\t1025
-2022\tSeton Hall\tSouth\t8\tGamboney\t750
-2022\tSan Diego State\tMidwest\t8\tRhinos\t900
-2022\tMemphis\tWest\t9\tChamps\t700
-2022\tMarquette\tEast\t9\tMaurer\t775
-2022\tTCU\tSouth\t9\tChamps\t700
-2022\tCreighton\tMidwest\t9\tGamboney\t700
-2022\tDavidson\tWest\t10\tCheeseBox\t875
-2022\tSan Fran\tEast\t10\tPrestige\t650
-2022\tLoyola\tSouth\t10\tRhinos\t850
-2022\tMiami\tMidwest\t10\tGamboney\t750
-2022\tRutgers/ND\tWest\t11\tDonkey\t750
-2022\tVirginia Tech\tEast\t11\tRhinos\t1000
-2022\tMichigan\tSouth\t11\tChamps\t1100
-2022\tIowa State\tMidwest\t11\tTeam US\t500
-2022\tNew Mexico State\tWest\t12\tGamboney\t400
-2022\tWyoming/Indiana\tEast\t12\tTeam US\t800
-2022\tUAB\tSouth\t12\tCheeseBox\t525
-2022\tRichmond\tMidwest\t12\tDick\t350
-2022\tVermont\tWest\t13\tRhinos\t500
-2022\tAkron\tEast\t13\tDonkey\t350
-2022\tChattanooga\tSouth\t13\tGamboney\t400
-2022\tSouth Dakota State\tMidwest\t13\tDonkey\t700
-2022\tMontana State\tWest\t14\tGamboney\t130
-2022\tYale\tEast\t14\tGamboney\t180
-2022\tLongwood\tSouth\t14\tDonkey\t225
-2022\tColgate\tMidwest\t14\tChamps\t250
-2022\tCS Fullerton\tWest\t15\tRhinos\t180
-2022\tSaint Peters\tEast\t15\tSC Garage\t190
-2022\tDelaware\tSouth\t15\tCheeseBox\t130
-2022\tJax State\tMidwest\t15\tGamboney\t250
-2022\tGeorgia State\tWest\t16\tRhinos\t200
-2022\tNorfolk State\tEast\t16\tChamps\t210
-2022\tBryant/Wright State\tSouth\t16\tDonkey\t180
-2022\tTexas SO/Texas A&M\tMidwest\t16\tDonkey\t200
-2021\tGonzaga\tWest\t1\tSC Garage\t6900
-2021\tMichigan\tEast\t1\tGamboney\t3550
-2021\tBaylor\tSouth\t1\tTeam US\t4350
-2021\tIllinois\tMidwest\t1\tPrestige\t5200
-2021\tIowa\tWest\t2\tPrestige\t2700
-2021\tAlabama\tEast\t2\tRhinos\t3000
-2021\tOhio St\tSouth\t2\tGamboney\t3050
-2021\tHouston\tMidwest\t2\tSC Garage\t3200
-2021\tKansas\tWest\t3\tRhinos\t1700
-2021\tTexas\tEast\t3\tSC Garage\t2200
-2021\tArkansas\tSouth\t3\tDonkey\t2150
-2021\tWest Virginia\tMidwest\t3\tAlive\t1700
-2021\tVirginia\tWest\t4\tChamps\t1250
-2021\tFlorida St\tEast\t4\tRhinos\t2000
-2021\tPurdue\tSouth\t4\tAlive\t1800
-2021\tOklahoma St\tMidwest\t4\tTeam US\t1600
-2021\tCreighton\tWest\t5\tDonkey\t1200
-2021\tColorado\tEast\t5\tTeam US\t1000
-2021\tVillanova\tSouth\t5\tPrestige\t950
-2021\tTennessee\tMidwest\t5\tSC Garage\t800
-2021\tUSC\tWest\t6\tChamps\t1200
-2021\tBYU\tEast\t6\tPrestige\t750
-2021\tTexas Tech\tSouth\t6\tPrestige\t1000
-2021\tSan Diego St\tMidwest\t6\tDonkey\t1000
-2021\tOregon\tWest\t7\tDonkey\t950
-2021\tUconn\tEast\t7\tChamps\t1050
-2021\tFlorida\tSouth\t7\tPrestige\t700
-2021\tClemson\tMidwest\t7\tDonkey\t600
-2021\tOklahoma\tWest\t8\tPrestige\t475
-2021\tLSU\tEast\t8\tChamps\t1000
-2021\tNo Carolina\tSouth\t8\tChamps\t700
-2021\tLoyola\tMidwest\t8\tDonkey\t650
-2021\tMissouri\tWest\t9\tSC Garage\t430
-2021\tSt Bonaventure\tEast\t9\tChamps\t700
-2021\tWisconsin\tSouth\t9\tGamboney\t475
-2021\tGeorgia Tech\tMidwest\t9\tPrestige\t450
-2021\tVCU\tWest\t10\tGamboney\t450
-2021\tMaryland\tEast\t10\tGamboney\t525
-2021\tVa Tech\tSouth\t10\tChamps\t600
-2021\tRutgers\tMidwest\t10\tPrestige\t800
-2021\tWich/Drake\tWest\t11\tChamps\t380
-2021\tMSU/UCLA\tEast\t11\tTeam US\t850
-2021\tUtah St\tSouth\t11\tRhinos\t500
-2021\tSyracuse\tMidwest\t11\tRhinos\t650
-2021\tUCSB\tWest\t12\tAlive\t470
-2021\tGeorgetown\tEast\t12\tAlive\t600
-2021\tWinthrop\tSouth\t12\tChamps\t450
-2021\tOregon St\tMidwest\t12\tChamps\t450
-2021\tOhio\tWest\t13\tRhinos\t450
-2021\tUNCG\tEast\t13\tDonkey\t140
-2021\tNo Texas\tSouth\t13\tTeam US\t250
-2021\tLiberty\tMidwest\t13\tAlive\t230
-2021\tE Wash\tWest\t14\tChamps\t140
-2021\tAbilene Chr\tEast\t14\tRhinos\t200
-2021\tColgate\tSouth\t14\tSC Garage\t250
-2021\tMorehead St\tMidwest\t14\tTeam US\t130
-2021\tGrand Canyon\tWest\t15\tTeam US\t100
-2021\tIona\tEast\t15\tSC Garage\t120
-2021\tOral Roberts\tSouth\t15\tDonkey\t160
-2021\tCleveland St\tMidwest\t15\tDonkey\t120
-2021\tNORF/APP St\tWest\t16\tDonkey\t190
-2021\tMTSM/TXSO\tEast\t16\tSC Garage\t120
-2021\tHartford\tSouth\t16\tDonkey\t120
-2021\tDrexel\tMidwest\t16\tChamps\t120
-2025\tAuburn\tSouth\t1\tDonkey\t8750
-2025\tFlorida\tWest\t1\tTeamUS\t10500
-2025\tDuke\tEast\t1\tJawn\t13000
-2025\tHouston\tMidwest\t1\tTeamUS\t7300
-2025\tMichigan St\tSouth\t2\tGamboney\t4700
-2025\tSaint Johns\tWest\t2\tRhino\t6200
-2025\tAlabama\tEast\t2\tDonkey\t6400
-2025\tTennessee\tMidwest\t2\tJawn\t6500
-2025\tIowa St\tSouth\t3\tChamps\t3000
-2025\tTexas Tech\tWest\t3\tTeamUS\t4100
-2025\tWisconsin\tEast\t3\tChamps\t3300
-2025\tKentucky\tMidwest\t3\tJawn\t2600
-2025\tTexas A&M\tSouth\t4\tRhino\t2900
-2025\tMaryland\tWest\t4\tChamps\t2800
-2025\tArizona\tEast\t4\tTeamUS\t3000
-2025\tPurdue\tMidwest\t4\tTeamUS\t1950
-2025\tMichigan\tSouth\t5\tRhino\t1900
-2025\tMemphis\tWest\t5\tRhino\t1000
-2025\tOregon\tEast\t5\tDonkey\t2000
-2025\tClemson\tMidwest\t5\tJawn\t2600
-2025\tOle Miss\tSouth\t6\t4H\t1500
-2025\tMissouri\tWest\t6\tChamps\t1800
-2025\tBYU\tEast\t6\tChamps\t1600
-2025\tIllinois\tMidwest\t6\tChamps\t2500
-2025\tMarquette\tSouth\t7\tDonkey\t1500
-2025\tKansas\tWest\t7\tPrestige\t1400
-2025\tSaint Marys\tEast\t7\tRhino\t1500
-2025\tUCLA\tMidwest\t7\tJawn\t1600
-2025\tLouisville\tSouth\t8\tJawn\t1500
-2025\tUconn\tWest\t8\tPrestige\t1100
-2025\tMiss St\tEast\t8\tChamps\t800
-2025\tGonzaga\tMidwest\t8\tJawn\t2000
-2025\tCreighton\tSouth\t9\t4H\t900
-2025\tOklahoma\tWest\t9\tDonkey\t700
-2025\tBaylor\tEast\t9\tDonkey\t800
-2025\tGeorgia\tMidwest\t9\tJawn\t650
-2025\tNew Mexico\tSouth\t10\tChamps\t825
-2025\tArkansas\tWest\t10\tDonkey\t800
-2025\tVanderbilt\tEast\t10\t4H\t650
-2025\tUtah St\tMidwest\t10\tRhino\t800
-2025\tSDSU/UNC\tSouth\t11\tJawn\t2000
-2025\tDrake\tWest\t11\tGamboney\t1050
-2025\tVCU\tEast\t11\tRhino\t1100
-2025\tTexas/Xavier\tMidwest\t11\tRhino\t800
-2025\tUC San Diego\tSouth\t12\tChamps\t900
-2025\tColorado St\tWest\t12\tPrestige\t1350
-2025\tLiberty\tEast\t12\tDonkey\t650
-2025\tMcNeese\tMidwest\t12\tPrestige\t550
-2025\tYale\tSouth\t13\tDonkey\t575
-2025\tGrand Canyon\tWest\t13\tGamboney\t400
-2025\tAkron\tEast\t13\tDonkey\t400
-2025\tHigh Point\tMidwest\t13\tDonkey\t600
-2025\tLipscomb\tSouth\t14\tGamboney\t250
-2025\tUNCW\tWest\t14\tGamboney\t200
-2025\tMontana\tEast\t14\t4H\t250
-2025\tTroy\tMidwest\t14\tPrestige\t250
-2025\tBryant\tSouth\t15\tDonkey\t200
-2025\tOmaha\tWest\t15\tDonkey\t220
-2025\tRobert Morris\tEast\t15\tDonkey\t320
-2025\tWofford\tMidwest\t15\tDonkey\t270
-2025\tALST/SFU\tSouth\t16\tDonkey\t420
-2025\tNorfolk St\tWest\t16\tDonkey\t500
-2025\tAMER/MTSM\tEast\t16\tDonkey\t300
-2025\tSIUE\tMidwest\t16\tDonkey\t520
-2024\tUconn\tSouth\t1\tTeam US\t6500
-2024\tNo Carolina\tEast\t1\tDonkey\t5000
-2024\tHouston\tMidwest\t1\tWhite Boy\t6000
-2024\tPurdue\tWest\t1\tTeam US\t5500
-2024\tIowa St\tSouth\t2\tChamps\t4600
-2024\tArizona\tEast\t2\tRhino\t5600
-2024\tMarquette\tMidwest\t2\tGamboney\t3900
-2024\tTennessee\tWest\t2\tChamps\t4500
-2024\tIllinois\tSouth\t3\tRhino\t3300
-2024\tBaylor\tEast\t3\tChamps\t2800
-2024\tKentucky\tMidwest\t3\tTeam US\t4000
-2024\tCreighton\tWest\t3\tRhino\t3800
-2024\tAuburn\tSouth\t4\tChamps\t3300
-2024\tAlabama\tEast\t4\tGamboney\t2500
-2024\tDuke\tMidwest\t4\tChamps\t3000
-2024\tKansas\tWest\t4\tDonkey\t2900
-2024\tSan Diego St\tSouth\t5\tDonkey\t1500
-2024\tSaint Marys\tEast\t5\tPenny\t1800
-2024\tWisconsin\tMidwest\t5\tRhino\t1800
-2024\tGonzaga\tWest\t5\tTeam US\t2400
-2024\tBYU\tSouth\t6\tPenny\t1900
-2024\tClemson\tEast\t6\tDonkey\t1050
-2024\tTexas Tech\tMidwest\t6\tPrestige\t1700
-2024\tSo Carolina\tWest\t6\tDonkey\t1150
-2024\tWashington St\tSouth\t7\tTeam US\t850
-2024\tDayton\tEast\t7\tChamps\t1100
-2024\tFlorida\tMidwest\t7\tDonkey\t1900
-2024\tTexas\tWest\t7\tTeam US\t1300
-2024\tFAU\tSouth\t8\tDonkey\t700
-2024\tMiss St\tEast\t8\tGamboney\t950
-2024\tNebraska\tMidwest\t8\tTeam US\t700
-2024\tUtah St\tWest\t8\tGamboney\t850
-2024\tNorthwestern\tSouth\t9\tGamboney\t1000
-2024\tMich St\tEast\t9\tPrestige\t1200
-2024\tTexas A&M\tMidwest\t9\tWhite Boy\t1200
-2024\tTCU\tWest\t9\tPrestige\t1200
-2024\tDrake\tSouth\t10\tGamboney\t1100
-2024\tNevada\tEast\t10\tWhite Boy\t1100
-2024\tBoise St/Colorado\tMidwest\t10\tPrestige\t1200
-2024\tVirginia/Col St\tWest\t10\tChamps\t500
-2024\tDuquesne\tSouth\t11\tChamps\t550
-2024\tNew Mexico\tEast\t11\tPenny\t2000
-2024\tNC State\tMidwest\t11\tRhino\t1300
-2024\tOregon\tWest\t11\tRhino\t900
-2024\tUAB\tSouth\t12\tTeam US\t750
-2024\tGrand Canyon\tEast\t12\tRhino\t750
-2024\tJames Madison\tMidwest\t12\tDonkey\t1050
-2024\tMcNeese\tWest\t12\tWhite Boy\t1000
-2024\tYale\tSouth\t13\tChamps\t300
-2024\tCharleston\tEast\t13\tDonkey\t500
-2024\tVermont\tMidwest\t13\tGamboney\t320
-2024\tSamford\tWest\t13\tWhite Boy\t600
-2024\tMorehead St\tSouth\t14\tPrestige\t260
-2024\tColgate\tEast\t14\tGamboney\t200
-2024\tOakland\tMidwest\t14\tGamboney\t220
-2024\tAkron\tWest\t14\tDonkey\t220
-2024\tSo Dakota St\tSouth\t15\tGamboney\t220
-2024\tLong Beach St\tEast\t15\tDonkey\t280
-2024\tWe Kentucky\tMidwest\t15\tChamps\t250
-2024\tSaint Peters\tWest\t15\tDonkey\t250
-2024\tStetson\tSouth\t16\tChamps\t170
-2024\tHOW/WAG\tEast\t16\tDonkey\t250
-2024\tLongwood\tMidwest\t16\tPenny\t300
-2024\tMon St/Gramb\tWest\t16\tDonkey\t230`;
+var HIST_RAW=`year	Team	Region	Seed	Purchaser	Purchase Price
+2023	Alabama	South	1	Gamboney	7100
+2023	Purdue	East	1	Donkey	6000
+2023	Houston	Midwest	1	Team US	6500
+2023	Kansas	West	1	SC Garage	6000
+2023	Arizona	South	2	Donkey	4500
+2023	Marquette	East	2	SC Garage	4200
+2023	Texas	Midwest	2	Champs	4900
+2023	UCLA	West	2	SC Garage	4400
+2023	Baylor	South	3	Team US	2300
+2023	Kansas St	East	3	Rhinos	2500
+2023	Xavier	Midwest	3	Gamboney	2950
+2023	Gonzaga	West	3	White Boy	3800
+2023	Virginia	South	4	SC Garage	1800
+2023	Tennessee	East	4	Champs	2100
+2023	Indiana	Midwest	4	Rhinos	1650
+2023	Uconn	West	4	Team US	3800
+2023	San Diego St	South	5	Champs	1800
+2023	Duke	East	5	White Boy	3200
+2023	Miami	Midwest	5	Rhinos	1100
+2023	Saint Marys	West	5	White Boy	1200
+2023	Creighton	South	6	Team US	1700
+2023	Kentucky	East	6	Champs	1900
+2023	Iowa St	Midwest	6	Champs	1000
+2023	TCU	West	6	Gamboney	1700
+2023	Missouri	South	7	Donkey	900
+2023	Michigan St	East	7	Champs	1500
+2023	Texas A&M	Midwest	7	White Boy	1700
+2023	Northwestern	West	7	Team US	900
+2023	Maryland	South	8	Team US	750
+2023	Memphis	East	8	Team US	1350
+2023	Iowa	Midwest	8	Rhinos	800
+2023	Arkansas	West	8	Prestige	1200
+2023	West Virginia	South	9	Rhinos	1150
+2023	FAU	East	9	Champs	750
+2023	Auburn	Midwest	9	Prestige	950
+2023	Illinois	West	9	White Boy	750
+2023	Utah State	South	10	Rhinos	1200
+2023	USC	East	10	Rhinos	950
+2023	Penn State	Midwest	10	Rhinos	1000
+2023	Boise St	West	10	Rhinos	900
+2023	NC State	South	11	Donkey	800
+2023	Providence	East	11	Rhinos	800
+2023	MSST/PITT	Midwest	11	Rhinos	1000
+2023	ASU/NEV	West	11	Rhinos	700
+2023	Charleston	South	12	Donkey	950
+2023	Oral Roberts	East	12	Donkey	600
+2023	Drake	Midwest	12	Prestige	1100
+2023	VCU	West	12	Team US	850
+2023	Furman	South	13	Champs	550
+2023	Louisiana	East	13	Champs	375
+2023	Kent State	Midwest	13	Donkey	800
+2023	Iona	West	13	Prestige	450
+2023	UCSB	South	14	Prestige	250
+2023	Montana St	East	14	Prestige	200
+2023	Kennesaw St	Midwest	14	Donkey	250
+2023	Grand Canyon	West	14	SC Garage	250
+2023	Princeton	South	15	Donkey	275
+2023	Vermont	East	15	Prestige	350
+2023	Colgate	Midwest	15	White Boy	250
+2023	UNC Asheville	West	15	Donkey	170
+2023	AMCC/SMO	South	16	Donkey	300
+2023	TXSO/FDU	East	16	Champs	225
+2023	N Kentucky	Midwest	16	Donkey	375
+2023	Howard	West	16	Donkey	300
+2022	Gonzaga	West	1	Team US	7000
+2022	Baylor	East	1	Dick	4500
+2022	Arizona	South	1	SC Garage	6300
+2022	Kansas	Midwest	1	Dick	5000
+2022	Duke	West	2	Gamboney	2600
+2022	Kentucky	East	2	Champs	5600
+2022	Villanova	South	2	Maurer	3500
+2022	Auburn	Midwest	2	Champs	3900
+2022	Texas Tech	West	3	Donkey	3200
+2022	Purdue	East	3	Gamboney	3400
+2022	Tennessee	South	3	Rhinos	4000
+2022	Wisconsin	Midwest	3	SC Garage	1900
+2022	Arkansas	West	4	Dick	1800
+2022	UCLA	East	4	Maurer	3650
+2022	Illinois	South	4	Donkey	2000
+2022	Providence	Midwest	4	Dick	800
+2022	Connecticut	West	5	Champs	1500
+2022	Saint Marys	East	5	Rhinos	1450
+2022	Houston	South	5	Prestige	2800
+2022	Iowa	Midwest	5	Prestige	3000
+2022	Alabama	West	6	Team US	750
+2022	Texas	East	6	CheeseBox	800
+2022	Colorado State	South	6	Team US	900
+2022	LSU	Midwest	6	Rhinos	1350
+2022	Michigan State	West	7	Rhinos	1400
+2022	Murray State	East	7	CheeseBox	850
+2022	Ohio State	South	7	Champs	900
+2022	USC	Midwest	7	Team US	950
+2022	Boise State	West	8	Team US	600
+2022	North Carolina	East	8	Team US	1025
+2022	Seton Hall	South	8	Gamboney	750
+2022	San Diego State	Midwest	8	Rhinos	900
+2022	Memphis	West	9	Champs	700
+2022	Marquette	East	9	Maurer	775
+2022	TCU	South	9	Champs	700
+2022	Creighton	Midwest	9	Gamboney	700
+2022	Davidson	West	10	CheeseBox	875
+2022	San Fran	East	10	Prestige	650
+2022	Loyola	South	10	Rhinos	850
+2022	Miami	Midwest	10	Gamboney	750
+2022	Rutgers/ND	West	11	Donkey	750
+2022	Virginia Tech	East	11	Rhinos	1000
+2022	Michigan	South	11	Champs	1100
+2022	Iowa State	Midwest	11	Team US	500
+2022	New Mexico State	West	12	Gamboney	400
+2022	Wyoming/Indiana	East	12	Team US	800
+2022	UAB	South	12	CheeseBox	525
+2022	Richmond	Midwest	12	Dick	350
+2022	Vermont	West	13	Rhinos	500
+2022	Akron	East	13	Donkey	350
+2022	Chattanooga	South	13	Gamboney	400
+2022	South Dakota State	Midwest	13	Donkey	700
+2022	Montana State	West	14	Gamboney	130
+2022	Yale	East	14	Gamboney	180
+2022	Longwood	South	14	Donkey	225
+2022	Colgate	Midwest	14	Champs	250
+2022	CS Fullerton	West	15	Rhinos	180
+2022	Saint Peters	East	15	SC Garage	190
+2022	Delaware	South	15	CheeseBox	130
+2022	Jax State	Midwest	15	Gamboney	250
+2022	Georgia State	West	16	Rhinos	200
+2022	Norfolk State	East	16	Champs	210
+2022	Bryant/Wright State	South	16	Donkey	180
+2022	Texas SO/Texas A&M	Midwest	16	Donkey	200
+2021	Gonzaga	West	1	SC Garage	6900
+2021	Michigan	East	1	Gamboney	3550
+2021	Baylor	South	1	Team US	4350
+2021	Illinois	Midwest	1	Prestige	5200
+2021	Iowa	West	2	Prestige	2700
+2021	Alabama	East	2	Rhinos	3000
+2021	Ohio St	South	2	Gamboney	3050
+2021	Houston	Midwest	2	SC Garage	3200
+2021	Kansas	West	3	Rhinos	1700
+2021	Texas	East	3	SC Garage	2200
+2021	Arkansas	South	3	Donkey	2150
+2021	West Virginia	Midwest	3	Alive	1700
+2021	Virginia	West	4	Champs	1250
+2021	Florida St	East	4	Rhinos	2000
+2021	Purdue	South	4	Alive	1800
+2021	Oklahoma St	Midwest	4	Team US	1600
+2021	Creighton	West	5	Donkey	1200
+2021	Colorado	East	5	Team US	1000
+2021	Villanova	South	5	Prestige	950
+2021	Tennessee	Midwest	5	SC Garage	800
+2021	USC	West	6	Champs	1200
+2021	BYU	East	6	Prestige	750
+2021	Texas Tech	South	6	Prestige	1000
+2021	San Diego St	Midwest	6	Donkey	1000
+2021	Oregon	West	7	Donkey	950
+2021	Uconn	East	7	Champs	1050
+2021	Florida	South	7	Prestige	700
+2021	Clemson	Midwest	7	Donkey	600
+2021	Oklahoma	West	8	Prestige	475
+2021	LSU	East	8	Champs	1000
+2021	No Carolina	South	8	Champs	700
+2021	Loyola	Midwest	8	Donkey	650
+2021	Missouri	West	9	SC Garage	430
+2021	St Bonaventure	East	9	Champs	700
+2021	Wisconsin	South	9	Gamboney	475
+2021	Georgia Tech	Midwest	9	Prestige	450
+2021	VCU	West	10	Gamboney	450
+2021	Maryland	East	10	Gamboney	525
+2021	Va Tech	South	10	Champs	600
+2021	Rutgers	Midwest	10	Prestige	800
+2021	Wich/Drake	West	11	Champs	380
+2021	MSU/UCLA	East	11	Team US	850
+2021	Utah St	South	11	Rhinos	500
+2021	Syracuse	Midwest	11	Rhinos	650
+2021	UCSB	West	12	Alive	470
+2021	Georgetown	East	12	Alive	600
+2021	Winthrop	South	12	Champs	450
+2021	Oregon St	Midwest	12	Champs	450
+2021	Ohio	West	13	Rhinos	450
+2021	UNCG	East	13	Donkey	140
+2021	No Texas	South	13	Team US	250
+2021	Liberty	Midwest	13	Alive	230
+2021	E Wash	West	14	Champs	140
+2021	Abilene Chr	East	14	Rhinos	200
+2021	Colgate	South	14	SC Garage	250
+2021	Morehead St	Midwest	14	Team US	130
+2021	Grand Canyon	West	15	Team US	100
+2021	Iona	East	15	SC Garage	120
+2021	Oral Roberts	South	15	Donkey	160
+2021	Cleveland St	Midwest	15	Donkey	120
+2021	NORF/APP St	West	16	Donkey	190
+2021	MTSM/TXSO	East	16	SC Garage	120
+2021	Hartford	South	16	Donkey	120
+2021	Drexel	Midwest	16	Champs	120
+2025	Auburn	South	1	Donkey	8750
+2025	Florida	West	1	TeamUS	10500
+2025	Duke	East	1	Jawn	13000
+2025	Houston	Midwest	1	TeamUS	7300
+2025	Michigan St	South	2	Gamboney	4700
+2025	Saint Johns	West	2	Rhino	6200
+2025	Alabama	East	2	Donkey	6400
+2025	Tennessee	Midwest	2	Jawn	6500
+2025	Iowa St	South	3	Champs	3000
+2025	Texas Tech	West	3	TeamUS	4100
+2025	Wisconsin	East	3	Champs	3300
+2025	Kentucky	Midwest	3	Jawn	2600
+2025	Texas A&M	South	4	Rhino	2900
+2025	Maryland	West	4	Champs	2800
+2025	Arizona	East	4	TeamUS	3000
+2025	Purdue	Midwest	4	TeamUS	1950
+2025	Michigan	South	5	Rhino	1900
+2025	Memphis	West	5	Rhino	1000
+2025	Oregon	East	5	Donkey	2000
+2025	Clemson	Midwest	5	Jawn	2600
+2025	Ole Miss	South	6	4H	1500
+2025	Missouri	West	6	Champs	1800
+2025	BYU	East	6	Champs	1600
+2025	Illinois	Midwest	6	Champs	2500
+2025	Marquette	South	7	Donkey	1500
+2025	Kansas	West	7	Prestige	1400
+2025	Saint Marys	East	7	Rhino	1500
+2025	UCLA	Midwest	7	Jawn	1600
+2025	Louisville	South	8	Jawn	1500
+2025	Uconn	West	8	Prestige	1100
+2025	Miss St	East	8	Champs	800
+2025	Gonzaga	Midwest	8	Jawn	2000
+2025	Creighton	South	9	4H	900
+2025	Oklahoma	West	9	Donkey	700
+2025	Baylor	East	9	Donkey	800
+2025	Georgia	Midwest	9	Jawn	650
+2025	New Mexico	South	10	Champs	825
+2025	Arkansas	West	10	Donkey	800
+2025	Vanderbilt	East	10	4H	650
+2025	Utah St	Midwest	10	Rhino	800
+2025	SDSU/UNC	South	11	Jawn	2000
+2025	Drake	West	11	Gamboney	1050
+2025	VCU	East	11	Rhino	1100
+2025	Texas/Xavier	Midwest	11	Rhino	800
+2025	UC San Diego	South	12	Champs	900
+2025	Colorado St	West	12	Prestige	1350
+2025	Liberty	East	12	Donkey	650
+2025	McNeese	Midwest	12	Prestige	550
+2025	Yale	South	13	Donkey	575
+2025	Grand Canyon	West	13	Gamboney	400
+2025	Akron	East	13	Donkey	400
+2025	High Point	Midwest	13	Donkey	600
+2025	Lipscomb	South	14	Gamboney	250
+2025	UNCW	West	14	Gamboney	200
+2025	Montana	East	14	4H	250
+2025	Troy	Midwest	14	Prestige	250
+2025	Bryant	South	15	Donkey	200
+2025	Omaha	West	15	Donkey	220
+2025	Robert Morris	East	15	Donkey	320
+2025	Wofford	Midwest	15	Donkey	270
+2025	ALST/SFU	South	16	Donkey	420
+2025	Norfolk St	West	16	Donkey	500
+2025	AMER/MTSM	East	16	Donkey	300
+2025	SIUE	Midwest	16	Donkey	520
+2024	Uconn	South	1	Team US	6500
+2024	No Carolina	East	1	Donkey	5000
+2024	Houston	Midwest	1	White Boy	6000
+2024	Purdue	West	1	Team US	5500
+2024	Iowa St	South	2	Champs	4600
+2024	Arizona	East	2	Rhino	5600
+2024	Marquette	Midwest	2	Gamboney	3900
+2024	Tennessee	West	2	Champs	4500
+2024	Illinois	South	3	Rhino	3300
+2024	Baylor	East	3	Champs	2800
+2024	Kentucky	Midwest	3	Team US	4000
+2024	Creighton	West	3	Rhino	3800
+2024	Auburn	South	4	Champs	3300
+2024	Alabama	East	4	Gamboney	2500
+2024	Duke	Midwest	4	Champs	3000
+2024	Kansas	West	4	Donkey	2900
+2024	San Diego St	South	5	Donkey	1500
+2024	Saint Marys	East	5	Penny	1800
+2024	Wisconsin	Midwest	5	Rhino	1800
+2024	Gonzaga	West	5	Team US	2400
+2024	BYU	South	6	Penny	1900
+2024	Clemson	East	6	Donkey	1050
+2024	Texas Tech	Midwest	6	Prestige	1700
+2024	So Carolina	West	6	Donkey	1150
+2024	Washington St	South	7	Team US	850
+2024	Dayton	East	7	Champs	1100
+2024	Florida	Midwest	7	Donkey	1900
+2024	Texas	West	7	Team US	1300
+2024	FAU	South	8	Donkey	700
+2024	Miss St	East	8	Gamboney	950
+2024	Nebraska	Midwest	8	Team US	700
+2024	Utah St	West	8	Gamboney	850
+2024	Northwestern	South	9	Gamboney	1000
+2024	Mich St	East	9	Prestige	1200
+2024	Texas A&M	Midwest	9	White Boy	1200
+2024	TCU	West	9	Prestige	1200
+2024	Drake	South	10	Gamboney	1100
+2024	Nevada	East	10	White Boy	1100
+2024	Boise St/Colorado	Midwest	10	Prestige	1200
+2024	Virginia/Col St	West	10	Champs	500
+2024	Duquesne	South	11	Champs	550
+2024	New Mexico	East	11	Penny	2000
+2024	NC State	Midwest	11	Rhino	1300
+2024	Oregon	West	11	Rhino	900
+2024	UAB	South	12	Team US	750
+2024	Grand Canyon	East	12	Rhino	750
+2024	James Madison	Midwest	12	Donkey	1050
+2024	McNeese	West	12	White Boy	1000
+2024	Yale	South	13	Champs	300
+2024	Charleston	East	13	Donkey	500
+2024	Vermont	Midwest	13	Gamboney	320
+2024	Samford	West	13	White Boy	600
+2024	Morehead St	South	14	Prestige	260
+2024	Colgate	East	14	Gamboney	200
+2024	Oakland	Midwest	14	Gamboney	220
+2024	Akron	West	14	Donkey	220
+2024	So Dakota St	South	15	Gamboney	220
+2024	Long Beach St	East	15	Donkey	280
+2024	We Kentucky	Midwest	15	Champs	250
+2024	Saint Peters	West	15	Donkey	250
+2024	Stetson	South	16	Champs	170
+2024	HOW/WAG	East	16	Donkey	250
+2024	Longwood	Midwest	16	Penny	300
+2024	Mon St/Gramb	West	16	Donkey	230`;
 
 function parseHist(raw){
   var lines=raw.trim().split("\n").slice(1);
@@ -387,7 +387,6 @@ function runAnalysis(allData,currentTeams){
   return{teamInsights:teamInsights,buyers:buyers,seedSummary:seedSummary,allData:allData};
 }
 
-// ── SIMULATOR ────────────────────────────────────────────────────────────────
 function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function b2pd(b){var p=Math.max(0.001,Math.min(0.999,b));return Math.log(p/(1-p))/0.163;}
 function blendR(t,w,adj){return(1-w)*t.kenpom+w*b2pd(t.torvik)+(adj?(t.adj||0):0)+(t.adjInj||0);}
@@ -406,11 +405,8 @@ var FIRST_FOUR=[
 ];
 var INJURY_DATA=[
   {team:"Duke",severity:"High",injuries:[{player:"Caleb Foster",status:"Questionable",detail:"Foot injury, missed ACC Tournament games."},{player:"Patrick Ngongba",status:"Questionable",detail:"Lower body injury, limited in practice."}]},
-  {team:"Michigan",severity:"Medium",injuries:[{player:"L.J. Cason",status:"Questionable",detail:"Hand injury, starting guard averaging 14 PPG."}]},
-  {team:"Gonzaga",severity:"High",injuries:[{player:"Braden Huff",status:"Out",detail:"Knee injury, confirmed OUT. Gonzaga 9 pts worse without him."}]},
-  {team:"Louisville",severity:"Medium",injuries:[{player:"Mikel Brown Jr.",status:"Questionable",detail:"Lower body, limited practice."}]},
-  {team:"Florida",severity:"Low",injuries:[{player:"Walter Clayton Jr.",status:"Day-to-Day",detail:"Minor ankle issue, expected to play."}]},
-  {team:"St. Johns",severity:"Low",injuries:[{player:"Zuby Ejiofor",status:"Day-to-Day",detail:"Minor knee soreness, expected available."}]}
+  {team:"Gonzaga",severity:"High",injuries:[{player:"Braden Huff",status:"Out",detail:"Knee injury, confirmed OUT."}]},
+  {team:"Florida",severity:"Low",injuries:[{player:"Walter Clayton Jr.",status:"Day-to-Day",detail:"Minor ankle issue, expected to play."}]}
 ];
 
 function runSim(teams,N,blendW,liveWinners,useAdj,seed){
@@ -540,8 +536,164 @@ function parseFutureYear(raw){
   return results;
 }
 
+// ── GUIDE COMPONENT (defined at module level, before App) ─────────────────
+function GuideTab(){
+  var _sec=useState("checklist"),sec=_sec[0],setSec=_sec[1];
+  var sections=[
+    ["checklist","✅ Checklist"],["teams","🏀 Ratings"],["bracket","🗂️ Bracket"],
+    ["adjs","⚡ Adjustments"],["calcutta","💰 Calcutta"],["live","🏆 Live"],
+    ["survivor","🎯 Survivor"],["history","📜 History"],["code","🛠️ Code Ref"]
+  ];
+  var h2={fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"};
+  var h3={fontSize:"12px",fontWeight:700,color:"#f59e0b",marginBottom:"4px",marginTop:"10px"};
+  var p={fontSize:"11px",color:"#94a3b8",lineHeight:1.8,marginBottom:"4px"};
+  var li={fontSize:"11px",color:"#94a3b8",lineHeight:2,paddingLeft:"14px"};
+  var warn={background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#fbbf24",marginBottom:"6px"};
+  var good={background:"rgba(22,101,52,0.12)",border:"1px solid rgba(22,101,52,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#4ade80",marginBottom:"6px"};
+  var code={background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",padding:"8px 10px",fontFamily:"monospace",fontSize:"10px",color:"#4ade80",marginBottom:"8px",whiteSpace:"pre"};
+  var content;
+  if(sec==="checklist")content=ce("div",{},
+    ce("div",{style:h2},"✅ Pre-Tournament Checklist"),
+    ce("div",{style:warn},"⚠️ Do these steps IN ORDER about 1 week before Selection Sunday."),
+    ce("div",{style:h3},"Step 1 — Update Team Ratings"),
+    ce("div",{style:li},"• Go to kenpom.com and barttorvik.com for current ratings"),
+    ce("div",{style:li},"• You only need the 64 tournament teams once bracket is announced"),
+    ce("div",{style:li},"• Use Setup tab → Paste Ratings to bulk-load (Name, KenPom, Barthag)"),
+    ce("div",{style:h3},"Step 2 — Update the Bracket (in code)"),
+    ce("div",{style:li},"• Open index.html in a text editor"),
+    ce("div",{style:li},"• Find DEFAULT_TEAMS — update all 64 teams"),
+    ce("div",{style:li},"• Find FIRST_FOUR — update the 4 play-in games"),
+    ce("div",{style:li},"• Find JASON_SHEET_ADJ / CLAUDE_ADJ — update opinion adjustments"),
+    ce("div",{style:h3},"Step 3 — Add This Year's Calcutta Data"),
+    ce("div",{style:li},"• After the auction, paste results into History tab → click Analyze"),
+    ce("div",{style:h3},"Step 4 — Reset App State"),
+    ce("div",{style:li},"• Setup tab → Reset, or create a new Profile for the new year"),
+    ce("div",{style:h3},"Step 5 — Run First Simulation"),
+    ce("div",{style:li},"• Set blend slider (50/50 default), click Run Sim with 10K sims"),
+    ce("div",{style:li},"• 1-seeds should show ~85-90% R64 win prob"),
+    ce("div",{style:good},"✅ Ready. Use tabs in order: Live → Win Probs → Calcutta EV → Survivor")
+  );
+  else if(sec==="teams")content=ce("div",{},
+    ce("div",{style:h2},"🏀 Updating Teams & Ratings"),
+    ce("div",{style:h3},"Option A — Paste Ratings (easiest)"),
+    ce("div",{style:p},"Setup tab → Paste Ratings. Paste 3 columns tab-separated:"),
+    ce("div",{style:code},"Duke\t38.90\t0.9813\nFlorida\t33.79\t0.9732"),
+    ce("div",{style:warn},"⚠️ KenPom = point differential. Barthag = 0 to 1 scale. Don't mix them up."),
+    ce("div",{style:h3},"Option B — Edit in Table"),
+    ce("div",{style:p},"Click any row in Setup tab to edit ratings/seed/name inline."),
+    ce("div",{style:h3},"Where to get ratings"),
+    ce("div",{style:li},"• KenPom: kenpom.com (~$20/yr)"),
+    ce("div",{style:li},"• BartTorvik: barttorvik.com (free, use T-Rank/Barthag column)")
+  );
+  else if(sec==="bracket")content=ce("div",{},
+    ce("div",{style:h2},"🗂️ Updating the Bracket in Code"),
+    ce("div",{style:warn},"⚠️ Requires editing index.html in a text editor. Make a backup first."),
+    ce("div",{style:h3},"Find DEFAULT_TEAMS"),
+    ce("div",{style:p},"Search for: var DEFAULT_TEAMS=["),
+    ce("div",{style:code},"{id:1,name:\"Florida\",seed:1,region:\"South\",\n kenpom:33.79,torvik:0.9732}"),
+    ce("div",{style:li},"• id: unique 1-64, keep sequential"),
+    ce("div",{style:li},"• region: exactly \"South\", \"East\", \"West\", or \"Midwest\""),
+    ce("div",{style:li},"• kenpom: efficiency margin · torvik: Barthag 0-1"),
+    ce("div",{style:h3},"Find FIRST_FOUR"),
+    ce("div",{style:p},"Search for: var FIRST_FOUR=["),
+    ce("div",{style:warn},"⚠️ slotId must match the DEFAULT_TEAMS id the winner replaces.")
+  );
+  else if(sec==="adjs")content=ce("div",{},
+    ce("div",{style:h2},"⚡ Adjustments"),
+    ce("div",{style:li},"• Sheet Adj (yellow): your personal opinion override"),
+    ce("div",{style:li},"• PG Adj (purple): second source adjustment"),
+    ce("div",{style:li},"• Inj Adj (red): injury — always active, not toggled"),
+    ce("div",{style:p},"Sheet + PG averaged → Blended Adj. Toggle with ⚡ Adjs button."),
+    ce("div",{style:h3},"Updating for a new year"),
+    ce("div",{style:code},"var JASON_SHEET_ADJ={\n  \"Duke\":2.0,\n  \"Houston\":1.5,\n  \"Georgia\":-2.0\n};"),
+    ce("div",{style:warn},"⚠️ +2.0 = team is 2pts better than ratings. Stay within ±3.")
+  );
+  else if(sec==="calcutta")content=ce("div",{},
+    ce("div",{style:h2},"💰 Calcutta EV Tab"),
+    ce("div",{style:h3},"Setup"),
+    ce("div",{style:li},"• Enter pot size in Total Pot field"),
+    ce("div",{style:li},"• Enter bid/sale prices in yellow column"),
+    ce("div",{style:li},"• Check ✓ for teams YOU own"),
+    ce("div",{style:h3},"Key columns"),
+    ce("div",{style:li},"• Exp Return: sim-based expected payout"),
+    ce("div",{style:li},"• Full EV $: profit/loss vs price paid (checked teams only)"),
+    ce("div",{style:li},"• R1 Edge: sim edge vs market spread"),
+    ce("div",{style:li},"• Blend %: average of your sim + Compare source B"),
+    ce("div",{style:h3},"Payouts (hardcoded)"),
+    ce("div",{style:p},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7% of pot. Search RPAY to change.")
+  );
+  else if(sec==="live")content=ce("div",{},
+    ce("div",{style:h2},"🏆 Live Tab"),
+    ce("div",{style:li},"• Enter First Four results first"),
+    ce("div",{style:li},"• Click Win as games go final — sim re-runs automatically"),
+    ce("div",{style:li},"• Eliminated teams grey out in Win Probs tab"),
+    ce("div",{style:h3},"Spread inputs (Win Probs tab)"),
+    ce("div",{style:p},"Negative = team is favored. Entering on one team auto-fills their opponent."),
+    ce("div",{style:h3},"Undoing"),
+    ce("div",{style:p},"Undo on any game card. Clear All wipes full bracket including First Four.")
+  );
+  else if(sec==="survivor")content=ce("div",{},
+    ce("div",{style:h2},"🎯 Survivor Tab"),
+    ce("div",{style:h3},"Pick schedule (10 picks total)"),
+    ce("div",{style:li},"• R64 Thu: 2 picks · R64 Fri: 2 picks"),
+    ce("div",{style:li},"• R32 Sat: 1 · R32 Sun: 1 · S16 Thu: 1 · S16 Fri: 1"),
+    ce("div",{style:li},"• E8 weekend: 2 total · F4: 1 · NCG: 1"),
+    ce("div",{style:h3},"Four strategy cards — click to activate"),
+    ce("div",{style:li},"• Chalk: max probability backwards from champion"),
+    ce("div",{style:li},"• Contrarian: win prob x (1-popularity)"),
+    ce("div",{style:li},"• Sim Backwards: cumulative probs from champion down"),
+    ce("div",{style:li},"• Sim Forward: greedy conditional win prob forward"),
+    ce("div",{style:h3},"Locking picks"),
+    ce("div",{style:p},"Click a team to lock (green check). Optimizer re-runs remaining slots.")
+  );
+  else if(sec==="history")content=ce("div",{},
+    ce("div",{style:h2},"📜 History Tab"),
+    ce("div",{style:p},"2021-2025 Calcutta data pre-loaded (336 records)."),
+    ce("div",{style:h3},"Adding a new year (temporary)"),
+    ce("div",{style:code},"year\tTeam\tRegion\tSeed\tPurchaser\tPrice\n2026\tDuke\tEast\t1\tJawn\t13000"),
+    ce("div",{style:h3},"Adding permanently"),
+    ce("div",{style:p},"Add rows to HIST_RAW string at top of index.html in same tab-separated format."),
+    ce("div",{style:warn},"⚠️ Never change the header row at top of HIST_RAW.")
+  );
+  else if(sec==="code")content=ce("div",{},
+    ce("div",{style:h2},"🛠️ Code Update Reference"),
+    ce("div",{style:h3},"Search for these each year"),
+    ce("div",{style:li},"• var DEFAULT_TEAMS=[ — 64 bracket teams"),
+    ce("div",{style:li},"• var FIRST_FOUR=[ — 4 play-in games + slotIds"),
+    ce("div",{style:li},"• var JASON_SHEET_ADJ= — your opinion adjustments"),
+    ce("div",{style:li},"• var CLAUDE_ADJ= — second source adjustments"),
+    ce("div",{style:li},"• var HIST_RAW= — paste new auction year here"),
+    ce("div",{style:li},"• var RPAY= — only if payout structure changes"),
+    ce("div",{style:h3},"Deploy"),
+    ce("div",{style:li},"• Edit index.html → test in browser (file://)"),
+    ce("div",{style:li},"• git add . → git commit → git push → Netlify auto-deploys"),
+    ce("div",{style:h3},"Profiles"),
+    ce("div",{style:p},"Create a new profile each year (e.g. Jason 2027) to preserve prior data."),
+    ce("div",{style:warn},"⚠️ localStorage is browser-specific. Use Export/Import to move between computers.")
+  );
+  else content=ce("div",{style:{color:"#475569"}},"Select a section.");
+
+  return ce("div",{style:{padding:"14px"}},
+    ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 16px",marginBottom:"14px",border:"1px solid #334155"}},
+      ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"2px"}},"📖 App Guide & Documentation"),
+      ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Everything you need to set up and use this app each year — start with the checklist")
+    ),
+    ce("div",{style:{display:"flex",gap:"12px",alignItems:"flex-start"}},
+      ce("div",{style:{width:"130px",flexShrink:0,display:"flex",flexDirection:"column",gap:"3px"}},
+        sections.map(function(pair){
+          return ce("button",{key:pair[0],onClick:function(){setSec(pair[0]);},
+            style:{background:sec===pair[0]?"#1e40af":"#1e293b",border:"1px solid "+(sec===pair[0]?"#3b82f6":"#334155"),borderRadius:"6px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:sec===pair[0]?700:400,color:sec===pair[0]?"#fff":"#94a3b8",textAlign:"left"}},
+            pair[1]);
+        })
+      ),
+      ce("div",{style:{flex:1,background:"#111827",borderRadius:"10px",padding:"16px",border:"1px solid #1e293b",minHeight:"400px"}},
+        content
+      )
+    )
+  );
+}
+
 function App(){
-  // ── ALL useState DECLARATIONS FIRST ──────────────────────────────────────
   var _names=useState(getNames()),profNames=_names[0],setProfNames=_names[1];
   var _active=useState(getActive()),active=_active[0],setActive=_active[1];
   var _npmO=useState(false),npmO=_npmO[0],setNpmO=_npmO[1];
@@ -565,7 +717,6 @@ function App(){
   var _varData=useState(null),varData=_varData[0],setVarData=_varData[1];
   var _varRunning=useState(false),varRunning=_varRunning[0],setVarRunning=_varRunning[1];
   var _varCount=useState(10),varCount=_varCount[0],setVarCount=_varCount[1];
-  // FIX: simSeed declared as useState before any useMemo/function references it
   var _seed=useState(20250316),simSeed=_seed[0],setSimSeed=_seed[1];
   var _st=useState(null),simTime=_st[0],setSimTime=_st[1];
   var _msg=useState(""),msg=_msg[0],setMsg=_msg[1];
@@ -595,14 +746,11 @@ function App(){
   var _histAnalysis=useState(null),histAnalysis=_histAnalysis[0],setHistAnalysis=_histAnalysis[1];
   var _histLoading=useState(false),histLoading=_histLoading[0],setHistLoading=_histLoading[1];
   var _survivorPicks=useState({}),survivorPicks=_survivorPicks[0],setSurvivorPicks=_survivorPicks[1];
-  // survivorPicks: {slotKey: teamId}
 
-  // ── REFS ──────────────────────────────────────────────────────────────────
   var saveTimer=useRef(null);
   var latestRef=useRef({});
   var rerunTimer=useRef(null);
 
-  // ── EFFECTS ───────────────────────────────────────────────────────────────
   useEffect(function(){
     var d=loadProfile(active);
     if(d){
@@ -625,7 +773,6 @@ function App(){
     },1000);
   }
   useEffect(function(){if(hydrated)scheduleSave();},[teams,simResults,numSims,blendW,lines,liveWinners,ffWinners,calcPrices,myTeams,calcPot,tab]);
-
   useEffect(function(){
     if(!hydrated||!simResults)return;
     if(rerunTimer.current)clearTimeout(rerunTimer.current);
@@ -633,7 +780,6 @@ function App(){
     return function(){clearTimeout(rerunTimer.current);};
   },[liveWinners,useAdj]);
 
-  // ── PROFILE MANAGEMENT ────────────────────────────────────────────────────
   function switchProfile(name){
     setActive(name);lsSet(activeKey(),name);
     var d=loadProfile(name);
@@ -652,14 +798,12 @@ function App(){
   function createProfile(){var name=npn.trim();if(!name||profNames.indexOf(name)>=0)return;var nn=profNames.concat([name]);setProfNames(nn);lsSet(namesKey(),nn);setNpmO(false);setNpn("");switchProfile(name);}
   function deleteProfile(){if(profNames.length<=1){alert("Can't delete only profile.");return;}var nn=profNames.filter(function(n){return n!==active;});lsDel(profileKey(active));setProfNames(nn);lsSet(namesKey(),nn);setDcO(false);switchProfile(nn[0]);}
 
-  // ── SIM ACTIONS ───────────────────────────────────────────────────────────
   function doRunSim(andSwitch,newSeed){
     setSimming(true);
     var snap=teams.slice(),sb=blendW,sn=numSims,slw=Object.assign({},liveWinners),ua=useAdj,sd=newSeed!=null?newSeed:simSeed;
     if(newSeed!=null)setSimSeed(newSeed);
     setTimeout(function(){var t0=performance.now();var res=runSim(snap,sn,sb,slw,ua,sd);setSimTime(((performance.now()-t0)/1000).toFixed(2));setSimRes(res);setSimming(false);if(andSwitch)setTab("results");},30);
   }
-
   function setWinner(gk,tid){setLiveWinners(function(p){var n=Object.assign({},p);n[gk]=tid;return n;});}
   function clearWinner(gk){setLiveWinners(function(p){var n=Object.assign({},p);delete n[gk];return n;});}
   function clearAllLW(){
@@ -709,94 +853,54 @@ function App(){
       setImO(false);setIt("");setIe("");setMsg("Imported.");setTimeout(function(){setMsg("");},3000);
     }catch(e){setIe("Invalid data.");}
   }
-
   function loadInjuries(){
-    setInjLoading(true);
-    setInjData(null);
+    setInjLoading(true);setInjData(null);
     var teamList=teams.map(function(t){return t.name;}).join(", ");
-    var prompt="You are a sports injury analyst. Search the web right now for the latest NCAA Tournament 2026 injury news.\n\nFor each of these teams: "+teamList+"\n\nReturn ONLY a JSON array (no markdown, no explanation) with this structure:\n[\n  {\n    \"team\": \"Duke\",\n    \"severity\": \"High\",\n    \"injuries\": [\n      {\"player\": \"Name\", \"status\": \"Out\", \"detail\": \"Brief current status from today's news\"}\n    ]\n  }\n]\n\nSeverity: High = key player Out or multiple Questionable. Medium = one starter Questionable. Low = minor issue. None = no known injuries.\nOnly include teams with actual injury news. Use web search to find the most current information as of today. Return valid JSON only.";
-    // Use Netlify function in production, fall back to direct API in Claude artifact environment
+    var prompt="You are a sports injury analyst. Search the web right now for the latest NCAA Tournament 2026 injury news.\n\nFor each of these teams: "+teamList+"\n\nReturn ONLY a JSON array (no markdown, no explanation) with this structure:\n[\n  {\n    \"team\": \"Duke\",\n    \"severity\": \"High\",\n    \"injuries\": [\n      {\"player\": \"Name\", \"status\": \"Out\", \"detail\": \"Brief current status\"}\n    ]\n  }\n]\nSeverity: High/Medium/Low/None. Return valid JSON only.";
     var apiUrl=window.location.hostname==="localhost"||window.location.protocol==="file:"
-      ?"https://api.anthropic.com/v1/messages"
-      :"/.netlify/functions/injuries";
+      ?"https://api.anthropic.com/v1/messages":"/.netlify/functions/injuries";
     var fetchBody=apiUrl.indexOf("netlify")>=0
       ?JSON.stringify({messages:[{role:"user",content:prompt}]})
       :JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:"user",content:prompt}]});
-    fetch(apiUrl,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:fetchBody
-    })
+    fetch(apiUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:fetchBody})
     .then(function(r){return r.json();})
     .then(function(data){
       var text="";
       if(data.content){data.content.forEach(function(block){if(block.type==="text")text+=block.text;});}
-      // strip markdown fences
       text=text.replace(/```json[\s\S]*?```/g,function(m){return m.replace(/```json/,"").replace(/```/,"");});
       text=text.replace(/```/g,"").trim();
-      // extract outermost JSON array
       var start=text.indexOf("["),end=text.lastIndexOf("]");
       if(start>=0&&end>start)text=text.slice(start,end+1);
-      // sanitize common JSON issues: trailing commas before } or ]
-      text=text.replace(/,(\s*[}\]])/g,"$1");
-      // remove control characters that break JSON.parse
-      text=text.replace(/[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]/g,"");
-      // sanitize string values: fix unescaped quotes and newlines inside "..." values
-      text=text.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g,function(match){
-        // re-escape any raw newlines/tabs that snuck inside string values
-        return match.replace(/\n/g,"\\n").replace(/\r/g,"\\r").replace(/\t/g,"\\t");
-      });
+      text=text.replace(/,(\s*[}\]])/g,"$1").replace(/[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]/g,"");
+      text=text.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g,function(match){return match.replace(/\n/g,"\\n").replace(/\r/g,"\\r").replace(/\t/g,"\\t");});
       var parsed;
-      try{
-        parsed=JSON.parse(text);
-      } catch(e){
-        // fallback: parse team by team using a tolerant approach
+      try{parsed=JSON.parse(text);}
+      catch(e){
         parsed=[];
-        // extract each team block between { "team": ... } boundaries
-        var teamRx=/"team"\s*:\s*"([^"]+)"/g,tm;
         var blocks=text.split(/(?=\{\s*"team")/);
         blocks.forEach(function(block){
           if(block.indexOf('"team"')<0)return;
-          // find balanced braces
           var depth=0,start2=-1,end2=-1;
-          for(var ci=0;ci<block.length;ci++){
-            if(block[ci]==='{'){if(depth===0)start2=ci;depth++;}
-            else if(block[ci]==='}'){depth--;if(depth===0){end2=ci;break;}}
-          }
+          for(var ci=0;ci<block.length;ci++){if(block[ci]==='{'){if(depth===0)start2=ci;depth++;}else if(block[ci]==='}'){depth--;if(depth===0){end2=ci;break;}}}
           if(start2<0||end2<0)return;
-          var chunk=block.slice(start2,end2+1);
-          // clean up the chunk: remove trailing commas, fix bare strings
-          chunk=chunk.replace(/,(\s*[}\]])/g,"$1");
+          var chunk=block.slice(start2,end2+1).replace(/,(\s*[}\]])/g,"$1");
           try{var obj=JSON.parse(chunk);if(obj.team)parsed.push(obj);}
-          catch(e2){
-            // extract fields manually as last resort
-            var teamM=chunk.match(/"team"\s*:\s*"([^"]+)"/);
-            var sevM=chunk.match(/"severity"\s*:\s*"([^"]+)"/);
-            if(teamM)parsed.push({team:teamM[1],severity:(sevM&&sevM[1])||"Unknown",injuries:[]});
-          }
+          catch(e2){var tm=chunk.match(/"team"\s*:\s*"([^"]+)"/),sv=chunk.match(/"severity"\s*:\s*"([^"]+)"/);if(tm)parsed.push({team:tm[1],severity:(sv&&sv[1])||"Unknown",injuries:[]});}
         });
-        if(!parsed.length)throw new Error("Could not parse injury JSON: "+e.message);
+        if(!parsed.length)throw new Error("Could not parse: "+e.message);
       }
-      teams.forEach(function(t){
-        var found=parsed.some(function(r){return r.team.toLowerCase()===t.name.toLowerCase()||r.team.toLowerCase().indexOf(t.name.toLowerCase().split(" ")[0])>=0;});
-        if(!found)parsed.push({team:t.name,severity:"None",injuries:[]});
-      });
-      var order={High:0,Medium:1,Low:2,None:3};
-      parsed.sort(function(a,b){return order[a.severity]-order[b.severity];});
-      setInjData({teams:parsed,timestamp:"Live · "+new Date().toLocaleString(),live:true});
-      setInjLoading(false);
+      teams.forEach(function(t){var found=parsed.some(function(r){return r.team.toLowerCase()===t.name.toLowerCase()||r.team.toLowerCase().indexOf(t.name.toLowerCase().split(" ")[0])>=0;});if(!found)parsed.push({team:t.name,severity:"None",injuries:[]});});
+      var order={High:0,Medium:1,Low:2,None:3};parsed.sort(function(a,b){return order[a.severity]-order[b.severity];});
+      setInjData({teams:parsed,timestamp:"Live · "+new Date().toLocaleString(),live:true});setInjLoading(false);
     })
     .catch(function(err){
-      console.error("Injury fetch error:",err);
       var teamNames=teams.map(function(t){return t.name;});
       var result=INJURY_DATA.filter(function(d){return teamNames.indexOf(d.team)>=0;});
       teams.forEach(function(t){if(!result.some(function(r){return r.team===t.name;}))result.push({team:t.name,severity:"None",injuries:[]});});
       var order={High:0,Medium:1,Low:2,None:3};result.sort(function(a,b){return order[a.severity]-order[b.severity];});
-      setInjData({teams:result,timestamp:"Fallback (static) · "+new Date().toLocaleString(),live:false});
-      setInjLoading(false);
+      setInjData({teams:result,timestamp:"Fallback · "+new Date().toLocaleString(),live:false});setInjLoading(false);
     });
   }
-
   function copyCalcuttaTable(){
     if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
     var unit=calcPot;var sorted=teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);});
@@ -804,7 +908,6 @@ function App(){
     sorted.forEach(function(t){var probs=simResults[t.id]||{},expRet=0,potPct=0;ROUNDS.forEach(function(r){expRet+=((probs[r]||0)*RPAY[r]*unit);potPct+=(probs[r]||0)*RPAY[r];});lo.push(t.seed+"\t"+t.name+"\t"+t.region+"\t"+(potPct*100).toFixed(2)+"%\t$"+expRet.toFixed(0));});
     setCalcExT(lo.join("\n"));setCalcExO(true);
   }
-
   function runCompare(){
     var a=parseCmpSource(cmpA),b=parseCmpSource(cmpB);if(!a.length&&!b.length)return;
     var mapB={};b.forEach(function(t){mapB[t.name]=t;});
@@ -828,14 +931,11 @@ function App(){
     setHistLoading(true);
     setTimeout(function(){var extra=futureRaw.trim()?parseFutureYear(futureRaw):[];var allData=HARDCODED.concat(extra);var result=runAnalysis(allData,teams);setHistAnalysis(result);setHistLoading(false);},200);
   }
-
-  // ── VARIANCE RUN ──────────────────────────────────────────────────────────
   function runVarianceAnalysis(){
     if(!simResults){setMsg("Run simulation first.");setTimeout(function(){setMsg("");},3000);return;}
     setVarRunning(true);
     setTimeout(function(){
-      var seeds=[];
-      for(var i=0;i<varCount;i++)seeds.push(Math.floor(Math.random()*2147483647));
+      var seeds=[];for(var i=0;i<varCount;i++)seeds.push(Math.floor(Math.random()*2147483647));
       var allRuns=seeds.map(function(s){return runSim(teams,numSims,blendW,liveWinners,useAdj,s);});
       var vd={};
       teams.forEach(function(t){
@@ -843,26 +943,20 @@ function App(){
         var avg=champVals.reduce(function(s,v){return s+v;},0)/champVals.length;
         var mn=Math.min.apply(null,champVals),mx=Math.max.apply(null,champVals);
         var variance=champVals.reduce(function(s,v){return s+(v-avg)*(v-avg);},0)/champVals.length;
-        var stdDev=Math.sqrt(variance);
         var f4Vals=allRuns.map(function(r){return(r[t.id]&&r[t.id].F4)||0;});
         var f4Avg=f4Vals.reduce(function(s,v){return s+v;},0)/f4Vals.length;
-        var f4Min=Math.min.apply(null,f4Vals);
-        var f4Max=Math.max.apply(null,f4Vals);
-        vd[t.id]={avg:avg,min:mn,max:mx,spread:mx-mn,stdDev:stdDev,f4Avg:f4Avg,f4Min:f4Min,f4Max:f4Max,n:varCount};
+        vd[t.id]={avg:avg,min:mn,max:mx,spread:mx-mn,stdDev:Math.sqrt(variance),f4Avg:f4Avg,f4Min:Math.min.apply(null,f4Vals),f4Max:Math.max.apply(null,f4Vals),n:varCount};
       });
-      setVarData(vd);
-      setVarRunning(false);
+      setVarData(vd);setVarRunning(false);
     },30);
   }
 
-  // ── DERIVED STATE (useMemo — after all useState/useEffect/useRef) ─────────
   var hasBlend=Object.keys(blendMap).length>0;
   var unit=calcPot;
   var gamesEntered=Object.keys(liveWinners).length;
   var ffEntered=Object.keys(ffWinners).length;
   var blendLabel=blendW===0?"KenPom Only":blendW===1?"T-Rank Only":"T "+Math.round(blendW*100)+"% / K "+Math.round((1-blendW)*100)+"%";
 
-  // FIX: r1Map declared here, after all useState hooks, so it's always available
   var r1Map=useMemo(function(){
     var map={};
     REGIONS.forEach(function(reg){
@@ -900,16 +994,13 @@ function App(){
           var gk=reg+"_"+roundLabel+"_"+mi;
           var winnerId=liveWinners[gk]||null;
           if(!winnerId){
-            // Shared key — always smallerId_largerId so both teams reference same stored value
             var idLo=Math.min(tA.id,tB.id),idHi=Math.max(tA.id,tB.id);
             var lkShared=idLo+"_"+idHi;
-            // The stored value is always from idLo's perspective (negative = idLo is fav)
             var spRaw=lines[lkShared]!==""&&lines[lkShared]!==undefined?parseFloat(lines[lkShared]):null;
             var lineWpLo=spRaw!==null&&!isNaN(spRaw)?sp2wp(spRaw):null;
             var lineWpHi=lineWpLo!==null?1-lineWpLo:null;
             var lineWpA=tA.id===idLo?lineWpLo:lineWpHi;
             var lineWpB=tA.id===idLo?lineWpHi:lineWpLo;
-            // lineKey for the spread input cell: stores as idLo perspective, but input shows from THAT team's perspective
             map[tA.id]={round:roundLabel,gk:gk,opp:tB,lineKey:lkShared,lineWpRaw:spRaw,isLo:tA.id===idLo,lineWp:lineWpA,isFav:lineWpA!==null&&lineWpA>0.5,alive:true,decided:false};
             map[tB.id]={round:roundLabel,gk:gk,opp:tA,lineKey:lkShared,lineWpRaw:spRaw,isLo:tB.id===idLo,lineWp:lineWpB,isFav:lineWpB!==null&&lineWpB>0.5,alive:true,decided:false};
             currentWinners.push(null);
@@ -923,7 +1014,6 @@ function App(){
         prevWinners=currentWinners;
       }
     });
-    // F4 matchup detection
     var f4Teams=[];
     REGIONS.forEach(function(reg){
       var e8gk=reg+"_E8_0",e8wid=liveWinners[e8gk];
@@ -982,7 +1072,6 @@ function App(){
     return{regions:regions,f4:f4,ncg:ncg};
   },[teams,liveWinners]);
 
-  // ── SUBCOMPONENTS ─────────────────────────────────────────────────────────
   function GameCard(props){
     var g=props.game;var tA=g.tA,tB=g.tB,locked=!!g.winner;
     var rkMap={"R64":"R64","R32":"R32","S16":"S16","E8":"E8","F4":"F4","NCG":"Champion"};
@@ -1010,7 +1099,6 @@ function App(){
     );
   }
 
-  // ── SETUP ROWS ───────────────────────────────────────────────────────────
   var setupRows=sortedTeams.map(function(team){
     var adjS=team.adjSheet||0,adjC=team.adjClaude||0,adjI=team.adjInj||0,adj=team.adj||0;
     var bl=blendR(team,blendW,useAdj),dis=Math.abs(team.kenpom-b2pd(team.torvik)),isEdit=editing===team.id;
@@ -1029,15 +1117,12 @@ function App(){
     );
   });
 
-  // ── WIN PROBS ROWS ────────────────────────────────────────────────────────
   var resultsRows=simResults?sortedTeams.map(function(team){
     var p=simResults[team.id]||{};
     var lm=liveMatchupMap[team.id]||null;
     var isElim=lm&&lm.alive===false;
     var simWp=p.R64||0;
     var roundProbs={"R64":p.R64||0,"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"NCG":p.Champion||0};
-    // Convert cumulative round prob → conditional game win prob
-    // e.g. R32 win prob = P(win R32) / P(reached R32) = R32 / R64
     var prevRoundProb={"R64":1,"R32":p.R64||0,"S16":p.R32||0,"E8":p.S16||0,"F4":p.E8||0,"NCG":p.F4||0};
     var curRound=lm&&lm.round?lm.round:"R64";
     var cumProb=roundProbs[curRound]||0;
@@ -1052,27 +1137,14 @@ function App(){
       spreadCell=ce("span",{style:{color:"#334155",fontSize:"10px"}},"—");
     } else if(lm&&lm.opp&&!lm.decided){
       var lk=lm.lineKey;
-      // Display spread from THIS team's perspective; stored value is from the lo-id team's perspective
       var storedVal=lines[lk];
       var displayVal="";
-      if(storedVal!==""&&storedVal!==undefined){
-        var sv=parseFloat(storedVal);
-        if(!isNaN(sv))displayVal=lm.isLo?String(storedVal):(sv===0?"0":String(-sv));
-      }
+      if(storedVal!==""&&storedVal!==undefined){var sv=parseFloat(storedVal);if(!isNaN(sv))displayVal=lm.isLo?String(storedVal):(sv===0?"0":String(-sv));}
       spreadCell=ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px",alignItems:"center"}},
         ce("span",{style:{fontSize:"9px",color:"#64748b"}},"vs #"+lm.opp.seed+" "+lm.opp.name.split(" ")[0]),
         ce("input",{type:"number",placeholder:"-14.5",value:displayVal,onChange:function(ev){
           var v=ev.target.value,k=lk,isLo=lm.isLo;
-          setLines(function(prev){
-            var n=Object.assign({},prev);
-            if(v===""||v===undefined){delete n[k];}
-            else{
-              var num=parseFloat(v);
-              // Always store from lo-id perspective
-              n[k]=isNaN(num)?"":String(isLo?num:-num);
-            }
-            return n;
-          });
+          setLines(function(prev){var n=Object.assign({},prev);if(v===""||v===undefined){delete n[k];}else{var num=parseFloat(v);n[k]=isNaN(num)?"":String(isLo?num:-num);}return n;});
         },style:iSt({width:"70px"})})
       );
     } else {
@@ -1127,7 +1199,6 @@ function App(){
     return ce("tr",{key:team.id,style:rowStyle},cells);
   }):[];
 
-  // ── CALCUTTA ROWS ─────────────────────────────────────────────────────────
   var R64_PAY_AMT=calcPot*RPAY.R64;
   var calcRows=simResults?sortedTeams.map(function(team){
     var probs=simResults[team.id]||{},champ=probs.Champion||0;
@@ -1148,10 +1219,7 @@ function App(){
     var blendDollarCell=blendDollar!==null?ce("span",{style:{color:"#c084fc",fontWeight:700}},"$"+blendDollar.toFixed(0)):ce("span",{style:{color:"#334155"}},"--");
     var mlCalcValCell=ce("span",{style:{color:"#334155"}},"--");
     var isFav=sm&&sm.isFav;
-    if(sm&&!isFav&&simWp>0&&simWp<1){
-      var mlNum=Math.round(((1-simWp)/simWp)*100);
-      if(mlNum>0){var decOdds=(mlNum+100)/100;mlCalcValCell=ce("span",{style:{color:"#f59e0b",fontWeight:700}},"$"+Math.round(R64_PAY_AMT/decOdds));}
-    }
+    if(sm&&!isFav&&simWp>0&&simWp<1){var mlNum=Math.round(((1-simWp)/simWp)*100);if(mlNum>0){var decOdds=(mlNum+100)/100;mlCalcValCell=ce("span",{style:{color:"#f59e0b",fontWeight:700}},"$"+Math.round(R64_PAY_AMT/decOdds));}}
     var rowBg=isMine?"rgba(30,64,175,0.15)":"transparent";
     return ce("tr",{key:team.id,style:{background:rowBg}},
       TD(ce("input",{type:"checkbox",checked:isMine,onChange:function(ev){var id=team.id,chk=ev.target.checked;setMyTeams(function(p){var n=Object.assign({},p);if(chk)n[id]=true;else delete n[id];return n;});},style:{cursor:"pointer",width:"14px",height:"14px",accentColor:"#3b82f6"}}),{textAlign:"center",width:"28px",padding:"6px 4px"}),
@@ -1172,7 +1240,6 @@ function App(){
     );
   }):[];
 
-  // ── PORTFOLIO ─────────────────────────────────────────────────────────────
   var portfolio=null;
   if(simResults){
     var myOwned=teams.filter(function(t){return myTeams[t.id]&&parseFloat(calcPrices[t.id])>0;});
@@ -1187,7 +1254,6 @@ function App(){
     }
   }
 
-  // ── COMPARE ───────────────────────────────────────────────────────────────
   var cmpFiltered=useMemo(function(){
     var q=cmpSearch.toLowerCase();
     var f=cmpRows.filter(function(r){if(q&&r.raw.toLowerCase().indexOf(q)<0)return false;if(cmpFilter==="matched"&&(r.evA===null||r.evB===null))return false;if(cmpFilter==="big"&&(r.evA===null||r.evB===null||Math.abs(r.evB-r.evA)<200))return false;if(cmpFilter==="onlyA"&&r.evB!==null)return false;if(cmpFilter==="onlyB"&&r.evA!==null)return false;return true;});
@@ -1212,7 +1278,6 @@ function App(){
 
   var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["history","📜 History"],["injuries","🏥 Injuries"],["survivor","🎯 Survivor"],["guide","📖 Guide"]];
 
-  // ── SURVIVOR TAB ──────────────────────────────────────────────────────────
   var SURVIVOR_SLOTS=[
     {key:"r64_thu_1",label:"R64 Thu #1",day:"Thu Mar 19",round:"R64",regions:["South","East"],pick:1},
     {key:"r64_thu_2",label:"R64 Thu #2",day:"Thu Mar 19",round:"R64",regions:["South","East"],pick:2},
@@ -1228,19 +1293,11 @@ function App(){
     {key:"ncg",label:"Championship",day:"Mon Apr 6",round:"Champion",regions:["South","East","West","Midwest"],pick:1},
   ];
   var ROUND_ORDER=["R64","R32","S16","E8","F4","Champion"];
-  // Default popularity by seed for proxy
-  var SEED_POP={"R64":{1:0.40,2:0.20,3:0.12,4:0.08,5:0.06,6:0.04,7:0.03,8:0.02,9:0.02,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
-    "R32":{1:0.45,2:0.22,3:0.14,4:0.09,5:0.05,6:0.03,7:0.02,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
-    "S16":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
-    "E8":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},
-    "F4":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001},
-    "Champion":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001}
-  };
+  var SEED_POP={"R64":{1:0.40,2:0.20,3:0.12,4:0.08,5:0.06,6:0.04,7:0.03,8:0.02,9:0.02,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},"R32":{1:0.45,2:0.22,3:0.14,4:0.09,5:0.05,6:0.03,7:0.02,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},"S16":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},"E8":{1:0.50,2:0.25,3:0.12,4:0.08,5:0.04,6:0.02,7:0.01,8:0.01,9:0.01,10:0.01,11:0.01,12:0.005,13:0.003,14:0.002,15:0.001,16:0.001},"F4":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001},"Champion":{1:0.55,2:0.25,3:0.12,4:0.05,5:0.02,6:0.01,7:0.005,8:0.003,9:0.003,10:0.002,11:0.002,12:0.001,13:0.001,14:0.001,15:0.001,16:0.001}};
 
   function SurvivorTab(){
     var _survMode=useState("chalk"),survMode=_survMode[0],setSurvMode=_survMode[1];
     var _popMap=useState({}),popMap=_popMap[0],setPopMap=_popMap[1];
-    // popMap: {teamId_round: pct} e.g. {"17_R64": 0.45}
 
     function getWinProb(team,round){
       if(!simResults||!simResults[team.id])return 0;
@@ -1257,11 +1314,8 @@ function App(){
     }
     function getFutureValue(team,afterRound){
       if(!simResults||!simResults[team.id])return 0;
-      var idx=ROUND_ORDER.indexOf(afterRound);
-      var fv=0;
-      for(var i=idx+1;i<ROUND_ORDER.length;i++){
-        fv+=getWinProb(team,ROUND_ORDER[i])*Math.pow(1.4,i-idx);
-      }
+      var idx=ROUND_ORDER.indexOf(afterRound);var fv=0;
+      for(var i=idx+1;i<ROUND_ORDER.length;i++)fv+=getWinProb(team,ROUND_ORDER[i])*Math.pow(1.4,i-idx);
       return fv;
     }
     function getEligible(slot,usedIds){
@@ -1269,12 +1323,10 @@ function App(){
         if(slot.regions.indexOf(t.region)<0)return false;
         if(usedIds[t.id])return false;
         if(slot.round!=="R64"){
-          var p=simResults&&simResults[t.id];
-          if(!p)return false;
+          var p=simResults&&simResults[t.id];if(!p)return false;
           var cum={"R32":p.R32||0,"S16":p.S16||0,"E8":p.E8||0,"F4":p.F4||0,"Champion":p.Champion||0};
           if((cum[slot.round]||0)<0.001)return false;
-          var lm=liveMatchupMap[t.id];
-          if(lm&&lm.alive===false)return false;
+          var lm=liveMatchupMap[t.id];if(lm&&lm.alive===false)return false;
         }
         return true;
       });
@@ -1282,86 +1334,49 @@ function App(){
     function getTeam(id){return teams.filter(function(t){return t.id===id;})[0]||null;}
     function pickColor(wp){return wp>=0.85?"#4ade80":wp>=0.70?"#86efac":wp>=0.55?"#fde68a":"#fb923c";}
 
-    // ── STRATEGY ENGINES ────────────────────────────────────────────────────
-    // Strategy 1: Chalk — maximize P(survive all rounds), work backwards
-    // Work backwards: NCG → F4 → E8 → ... assigning best available team per slot
     function chalkPath(){
-      var usedIds={};
-      var result={};
-      var slots=SURVIVOR_SLOTS.slice().reverse(); // NCG first
-      slots.forEach(function(slot){
+      var usedIds={},result={};
+      SURVIVOR_SLOTS.slice().reverse().forEach(function(slot){
         if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
-        var eligible=getEligible(slot,usedIds);
-        if(!eligible.length){result[slot.key]=null;return;}
+        var eligible=getEligible(slot,usedIds);if(!eligible.length){result[slot.key]=null;return;}
         var best=eligible.slice().sort(function(a,b){return getWinProb(b,slot.round)-getWinProb(a,slot.round);})[0];
-        result[slot.key]=best.id;
-        usedIds[best.id]=true;
+        result[slot.key]=best.id;usedIds[best.id]=true;
       });
       return result;
     }
-
-    // Strategy 2: Contrarian — maximize win prob × (1 - popularity), per-round
     function contrPath(){
-      var usedIds={};
-      var result={};
-      var slots=SURVIVOR_SLOTS.slice().reverse();
-      slots.forEach(function(slot){
+      var usedIds={},result={};
+      SURVIVOR_SLOTS.slice().reverse().forEach(function(slot){
         if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
-        var eligible=getEligible(slot,usedIds);
-        if(!eligible.length){result[slot.key]=null;return;}
-        var best=eligible.slice().sort(function(a,b){
-          var sa=getWinProb(a,slot.round)*(1-getPopularity(a,slot.round));
-          var sb=getWinProb(b,slot.round)*(1-getPopularity(b,slot.round));
-          return sb-sa;
-        })[0];
-        result[slot.key]=best.id;
-        usedIds[best.id]=true;
+        var eligible=getEligible(slot,usedIds);if(!eligible.length){result[slot.key]=null;return;}
+        var best=eligible.slice().sort(function(a,b){return(getWinProb(b,slot.round)*(1-getPopularity(b,slot.round)))-(getWinProb(a,slot.round)*(1-getPopularity(a,slot.round)));})[0];
+        result[slot.key]=best.id;usedIds[best.id]=true;
       });
       return result;
     }
-
-    // Strategy 3A: Sim Backwards — start from most likely champion, work back
     function simBackPath(){
-      var usedIds={};
-      var result={};
-      var slots=SURVIVOR_SLOTS.slice().reverse();
-      slots.forEach(function(slot){
+      var usedIds={},result={};
+      SURVIVOR_SLOTS.slice().reverse().forEach(function(slot){
         if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
-        var eligible=getEligible(slot,usedIds);
-        if(!eligible.length){result[slot.key]=null;return;}
-        // Use cumulative sim prob for the slot's round (not conditional) to preserve champ path
-        var best=eligible.slice().sort(function(a,b){
-          var pa=simResults&&simResults[a.id]?simResults[a.id][slot.round]||0:0;
-          var pb=simResults&&simResults[b.id]?simResults[b.id][slot.round]||0:0;
-          return pb-pa;
-        })[0];
-        result[slot.key]=best.id;
-        usedIds[best.id]=true;
+        var eligible=getEligible(slot,usedIds);if(!eligible.length){result[slot.key]=null;return;}
+        var best=eligible.slice().sort(function(a,b){return((simResults&&simResults[b.id]?simResults[b.id][slot.round]||0:0))-((simResults&&simResults[a.id]?simResults[a.id][slot.round]||0:0));})[0];
+        result[slot.key]=best.id;usedIds[best.id]=true;
       });
       return result;
     }
-
-    // Strategy 3B: Sim Forward — greedy conditional win prob each round
     function simFwdPath(){
-      var usedIds={};
-      var result={};
+      var usedIds={},result={};
       SURVIVOR_SLOTS.forEach(function(slot){
         if(survivorPicks[slot.key]){result[slot.key]=survivorPicks[slot.key];usedIds[survivorPicks[slot.key]]=true;return;}
-        var eligible=getEligible(slot,usedIds);
-        if(!eligible.length){result[slot.key]=null;return;}
+        var eligible=getEligible(slot,usedIds);if(!eligible.length){result[slot.key]=null;return;}
         var best=eligible.slice().sort(function(a,b){return getWinProb(b,slot.round)-getWinProb(a,slot.round);})[0];
-        result[slot.key]=best.id;
-        usedIds[best.id]=true;
+        result[slot.key]=best.id;usedIds[best.id]=true;
       });
       return result;
     }
-
     function pathProb(path){
       var p=1;
-      SURVIVOR_SLOTS.forEach(function(slot){
-        var tid=path[slot.key];
-        if(tid){var t=getTeam(tid);if(t)p*=getWinProb(t,slot.round);}
-      });
+      SURVIVOR_SLOTS.forEach(function(slot){var tid=path[slot.key];if(tid){var t=getTeam(tid);if(t)p*=getWinProb(t,slot.round);}});
       return p;
     }
 
@@ -1370,26 +1385,19 @@ function App(){
     var simBack=simResults?simBackPath():{};
     var simFwd=simResults?simFwdPath():{};
     var myPath=survMode==="chalk"?chalk:survMode==="contr"?contr:survMode==="simback"?simBack:simFwd;
+    var usedIds={};Object.values(survivorPicks).forEach(function(tid){if(tid)usedIds[tid]=true;});
 
-    var usedIds={};
-    Object.values(survivorPicks).forEach(function(tid){if(tid)usedIds[tid]=true;});
-
-    // ── STRATEGY CARDS ──────────────────────────────────────────────────────
     function StratCard(props){
       var path=props.path,label=props.label,color=props.color,desc=props.desc,modeKey=props.modeKey;
-      var prob=pathProb(path);
-      var isActive=survMode===modeKey;
-      return ce("div",{
-        onClick:function(){setSurvMode(modeKey);},
-        style:{flex:"1",minWidth:"180px",background:isActive?"rgba("+color+",0.15)":"#111827",borderRadius:"10px",padding:"12px",border:"2px solid "+(isActive?"rgba("+color+",0.8)":"#1e293b"),cursor:"pointer",transition:"all 0.15s"}},
+      var prob=pathProb(path);var isActive=survMode===modeKey;
+      return ce("div",{onClick:function(){setSurvMode(modeKey);},style:{flex:"1",minWidth:"180px",background:isActive?"rgba("+color+",0.15)":"#111827",borderRadius:"10px",padding:"12px",border:"2px solid "+(isActive?"rgba("+color+",0.8)":"#1e293b"),cursor:"pointer"}},
         ce("div",{style:{fontSize:"11px",fontWeight:700,color:"rgb("+color+")",marginBottom:"4px"}},label),
         ce("div",{style:{fontSize:"9px",color:"#64748b",marginBottom:"8px",lineHeight:1.5}},desc),
         ce("div",{style:{fontSize:"22px",fontWeight:700,color:prob>0.3?"#4ade80":prob>0.1?"#fde68a":"#fb923c",marginBottom:"6px"}},(prob*100).toFixed(1)+"%"),
         ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px"}},
           SURVIVOR_SLOTS.map(function(slot){
-            var tid=path[slot.key];var t=tid?getTeam(tid):null;
-            var wp=t?getWinProb(t,slot.round):0;
-            return ce("div",{key:slot.key,style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"9px",padding:"1px 0",borderBottom:"1px solid #0f172a"}},
+            var tid=path[slot.key];var t=tid?getTeam(tid):null;var wp=t?getWinProb(t,slot.round):0;
+            return ce("div",{key:slot.key,style:{display:"flex",justifyContent:"space-between",fontSize:"9px",padding:"1px 0",borderBottom:"1px solid #0f172a"}},
               ce("span",{style:{color:"#475569",minWidth:"52px"}},slot.label),
               ce("span",{style:{color:"#f1f5f9",fontWeight:600,flex:1,marginLeft:"4px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t?t.name:"--"),
               ce("span",{style:{color:pickColor(wp),fontWeight:700,marginLeft:"4px"}},t?(wp*100).toFixed(0)+"%":"")
@@ -1410,16 +1418,11 @@ function App(){
       {label:"Final Four — Sat Apr 4",slots:["f4"],color:"#166534"},
       {label:"Championship — Mon Apr 6",slots:["ncg"],color:"#166534"},
     ];
-
     var myProb=pathProb(myPath);
 
     return ce("div",{style:{padding:"14px"}},
-      // Header
       ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",border:"1px solid #334155",display:"flex",gap:"16px",alignItems:"center",flexWrap:"wrap"}},
-        ce("div",{style:{flex:1}},
-          ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#f59e0b",marginBottom:"2px"}},"🎯 Survivor Pool Optimizer"),
-          ce("div",{style:{fontSize:"10px",color:"#64748b"}},"10 picks · each team once · 3 strategy paths · click a strategy to use it as your picks guide")
-        ),
+        ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#f59e0b",marginBottom:"2px"}},"🎯 Survivor Pool Optimizer"),ce("div",{style:{fontSize:"10px",color:"#64748b"}},"10 picks · each team once · 4 strategy paths")),
         !simResults?ce("span",{style:{fontSize:"11px",color:"#f87171"}},"⚠ Run simulation first"):
         ce("div",{style:{display:"flex",gap:"16px",alignItems:"center"}},
           ce("div",{},ce("div",{style:{fontSize:"10px",color:"#94a3b8",marginBottom:"2px"}},"Your Path Odds"),ce("div",{style:{fontSize:"22px",fontWeight:700,color:myProb>0.3?"#4ade80":myProb>0.1?"#fde68a":"#f87171"}},(myProb*100).toFixed(1)+"%")),
@@ -1428,62 +1431,39 @@ function App(){
       ),
       !simResults?ce("div",{style:{textAlign:"center",padding:"60px",color:"#64748b"}},ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"🎯"),ce("div",{style:{fontSize:"13px",fontWeight:600}},"Run simulation first")):
       ce("div",{},
-        // Strategy cards
         ce("div",{style:{display:"flex",gap:"10px",marginBottom:"14px",flexWrap:"wrap"}},
-          ce(StratCard,{path:chalk,label:"1 — Chalk Path 🏆",color:"74,222,128",desc:"Max P(survive all 10). Works backwards from most likely champion. Pure probability.",modeKey:"chalk"}),
-          ce(StratCard,{path:contr,label:"2 — Contrarian Path 🎭",color:"251,191,36",desc:"Win prob × (1 − popularity). Finds high-probability picks the field avoids. Edit % below.",modeKey:"contr"}),
-          ce(StratCard,{path:simBack,label:"3A — Sim Backwards 📊",color:"129,140,248",desc:"Your sim output, backwards from your most likely champion down through all rounds.",modeKey:"simback"}),
-          ce(StratCard,{path:simFwd,label:"3B — Sim Forward 📊",color:"192,132,252",desc:"Your sim output, greedy forward — best conditional win prob each round in order.",modeKey:"simfwd"})
+          ce(StratCard,{path:chalk,label:"1 — Chalk Path 🏆",color:"74,222,128",desc:"Max P(survive all 10). Works backwards from most likely champion.",modeKey:"chalk"}),
+          ce(StratCard,{path:contr,label:"2 — Contrarian Path 🎭",color:"251,191,36",desc:"Win prob × (1 − popularity). Avoids crowded picks.",modeKey:"contr"}),
+          ce(StratCard,{path:simBack,label:"3A — Sim Backwards 📊",color:"129,140,248",desc:"Your sim, backwards from most likely champion down.",modeKey:"simback"}),
+          ce(StratCard,{path:simFwd,label:"3B — Sim Forward 📊",color:"192,132,252",desc:"Your sim, greedy forward each round.",modeKey:"simfwd"})
         ),
-
-        // Popularity editor (only shown for contrarian)
         survMode==="contr"?ce("div",{style:{background:"#111827",borderRadius:"8px",padding:"12px",marginBottom:"12px",border:"1px solid #334155"}},
-          ce("div",{style:{fontSize:"11px",fontWeight:700,color:"#fbbf24",marginBottom:"8px"}},"📊 Edit Pick Popularity % per Team/Round (pre-filled with seed-based proxy)"),
-          ce("div",{style:{fontSize:"9px",color:"#64748b",marginBottom:"8px"}},"Enter % of pool entries expected to pick each team in each round. Higher = more crowded. Leave blank to use seed proxy."),
+          ce("div",{style:{fontSize:"11px",fontWeight:700,color:"#fbbf24",marginBottom:"8px"}},"📊 Edit Pick Popularity % per Team/Round"),
           ce("div",{style:{overflowX:"auto"}},ce("table",{},
             ce("thead",{},ce("tr",{},TH("Team"),TH("Seed"),TH("R64",{textAlign:"center"}),TH("R32",{textAlign:"center"}),TH("S16",{textAlign:"center"}),TH("E8",{textAlign:"center"}),TH("F4",{textAlign:"center"}),TH("NCG",{textAlign:"center"}))),
             ce("tbody",{},teams.slice().sort(function(a,b){return a.seed-b.seed||a.region.localeCompare(b.region);}).map(function(t){
-              return ce("tr",{key:t.id},
-                TD(ce("span",{style:{fontSize:"10px",fontWeight:600}},t.name)),
-                TD(badge(t.seed)),
+              return ce("tr",{key:t.id},TD(ce("span",{style:{fontSize:"10px",fontWeight:600}},t.name)),TD(badge(t.seed)),
                 ["R64","R32","S16","E8","F4","Champion"].map(function(r){
-                  var k=t.id+"_"+r;
-                  var proxy=SEED_POP[r]&&SEED_POP[r][t.seed]?Math.round((SEED_POP[r][t.seed])*100):"";
-                  var cur=popMap[k]!==undefined?Math.round(popMap[k]*100):"";
-                  return TD(ce("input",{key:r,type:"number",min:"0",max:"100",placeholder:proxy,value:cur,
-                    onChange:function(ev){var v=ev.target.value,kk=k;setPopMap(function(p){var n=Object.assign({},p);if(v===""||v===undefined)delete n[kk];else n[kk]=parseFloat(v)/100;return n;});},
-                    style:iSt({width:"44px",fontSize:"10px"})}),{textAlign:"center"});
+                  var k=t.id+"_"+r,proxy=SEED_POP[r]&&SEED_POP[r][t.seed]?Math.round(SEED_POP[r][t.seed]*100):"",cur=popMap[k]!==undefined?Math.round(popMap[k]*100):"";
+                  return TD(ce("input",{key:r,type:"number",min:"0",max:"100",placeholder:proxy,value:cur,onChange:function(ev){var v=ev.target.value,kk=k;setPopMap(function(p){var n=Object.assign({},p);if(v===""||v===undefined)delete n[kk];else n[kk]=parseFloat(v)/100;return n;});},style:iSt({width:"44px",fontSize:"10px"})}),{textAlign:"center"});
                 })
               );
             }))
           ))
         ):null,
-
-        // Pick slots
         ce("div",{style:{display:"flex",flexDirection:"column",gap:"8px"}},
           dayGroups.map(function(dg){
             return ce("div",{key:dg.label,style:{background:"#111827",borderRadius:"10px",border:"1px solid #1e293b",overflow:"hidden"}},
-              ce("div",{style:{background:dg.color+"22",borderBottom:"1px solid "+dg.color+"44",padding:"7px 14px"}},
-                ce("span",{style:{fontSize:"11px",fontWeight:700,color:"#f1f5f9"}},dg.label)
-              ),
+              ce("div",{style:{background:dg.color+"22",borderBottom:"1px solid "+dg.color+"44",padding:"7px 14px"}},ce("span",{style:{fontSize:"11px",fontWeight:700,color:"#f1f5f9"}},dg.label)),
               ce("div",{style:{padding:"8px",display:"flex",gap:"8px",flexWrap:"wrap"}},
                 dg.slots.map(function(sk){
-                  var slot=SURVIVOR_SLOTS.filter(function(s){return s.key===sk;})[0];
-                  if(!slot)return null;
-                  var lockedTid=survivorPicks[slot.key]||null;
-                  var recTid=myPath[slot.key]||null;
+                  var slot=SURVIVOR_SLOTS.filter(function(s){return s.key===sk;})[0];if(!slot)return null;
+                  var lockedTid=survivorPicks[slot.key]||null,recTid=myPath[slot.key]||null;
                   var eligible=getEligible(slot,{});
                   var scored=eligible.map(function(t){
-                    var wp=getWinProb(t,slot.round);
-                    var pop=getPopularity(t,slot.round);
-                    var fv=getFutureValue(t,slot.round);
-                    var contrScore=wp*(1-pop);
-                    var isUsed=!!usedIds[t.id]&&t.id!==lockedTid;
-                    return{team:t,wp:wp,pop:pop,fv:fv,contrScore:contrScore,isUsed:isUsed};
-                  }).sort(function(a,b){
-                    if(survMode==="contr")return b.contrScore-a.contrScore;
-                    return b.wp-a.wp;
-                  });
+                    var wp=getWinProb(t,slot.round),pop=getPopularity(t,slot.round),fv=getFutureValue(t,slot.round);
+                    return{team:t,wp:wp,pop:pop,fv:fv,contrScore:wp*(1-pop),isUsed:!!usedIds[t.id]&&t.id!==lockedTid};
+                  }).sort(function(a,b){return survMode==="contr"?b.contrScore-a.contrScore:b.wp-a.wp;});
                   var top=scored.slice(0,8);
                   return ce("div",{key:sk,style:{flex:"1",minWidth:"190px",background:"#1e293b",borderRadius:"8px",padding:"8px",border:"1px solid "+(lockedTid?"#166534":"#334155")}},
                     ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
@@ -1493,25 +1473,19 @@ function App(){
                     ),
                     ce("div",{style:{display:"flex",flexDirection:"column",gap:"2px"}},
                       top.map(function(s){
-                        var t=s.team;
-                        var isLocked=lockedTid===t.id;
-                        var isRec=!lockedTid&&recTid===t.id;
-                        var isUsedElsewhere=usedIds[t.id]&&!isLocked;
+                        var t=s.team,isLocked=lockedTid===t.id,isRec=!lockedTid&&recTid===t.id,isUsedElsewhere=usedIds[t.id]&&!isLocked;
                         return ce("div",{key:t.id,
                           onClick:function(){if(isUsedElsewhere)return;var k=sk,tid=t.id;setSurvivorPicks(function(p){var n=Object.assign({},p);if(n[k]===tid)delete n[k];else n[k]=tid;return n;});},
                           style:{display:"flex",alignItems:"center",gap:"5px",padding:"4px 7px",borderRadius:"5px",cursor:isUsedElsewhere?"not-allowed":"pointer",
                             background:isLocked?"rgba(22,101,52,0.35)":isRec?"rgba(30,64,175,0.25)":"rgba(255,255,255,0.02)",
-                            opacity:isUsedElsewhere?0.25:1,
-                            border:"1px solid "+(isLocked?"#166534":isRec?"#1e40af":"transparent")}},
+                            opacity:isUsedElsewhere?0.25:1,border:"1px solid "+(isLocked?"#166534":isRec?"#1e40af":"transparent")}},
                           badge(t.seed),
                           ce("span",{style:{flex:1,fontSize:"10px",fontWeight:isLocked||isRec?700:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.name),
-                          ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"0px"}},
+                          ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end"}},
                             ce("span",{style:{fontSize:"10px",fontWeight:700,color:pickColor(s.wp)}},(s.wp*100).toFixed(1)+"%"),
-                            survMode==="contr"?ce("span",{style:{fontSize:"8px",color:"#475569"}},(s.pop*100).toFixed(0)+"% pop"):
-                            ce("span",{style:{fontSize:"8px",color:"#475569"}},"FV:"+(s.fv).toFixed(1))
+                            survMode==="contr"?ce("span",{style:{fontSize:"8px",color:"#475569"}},(s.pop*100).toFixed(0)+"% pop"):ce("span",{style:{fontSize:"8px",color:"#475569"}},"FV:"+(s.fv).toFixed(1))
                           ),
-                          isLocked?ce("span",{style:{fontSize:"9px",color:"#4ade80",fontWeight:700}},"✓"):
-                          isRec?ce("span",{style:{fontSize:"9px",color:"#60a5fa",fontWeight:700}},"★"):null
+                          isLocked?ce("span",{style:{fontSize:"9px",color:"#4ade80",fontWeight:700}},"✓"):isRec?ce("span",{style:{fontSize:"9px",color:"#60a5fa",fontWeight:700}},"★"):null
                         );
                       })
                     )
@@ -1520,21 +1494,58 @@ function App(){
               )
             );
           }),
+          // Parlay calculator
+          ce("div",{style:{background:"#111827",borderRadius:"10px",border:"1px solid #1e293b",overflow:"hidden"}},
+            ce("div",{style:{background:"rgba(251,191,36,0.1)",borderBottom:"1px solid rgba(251,191,36,0.2)",padding:"8px 14px"}},ce("span",{style:{fontSize:"11px",fontWeight:700,color:"#fbbf24"}},"💰 12-Leg Parlay Calculator — Fair Odds (No Vig)")),
+            ce("div",{style:{padding:"10px 12px"}},function(){
+              var legs=SURVIVOR_SLOTS.map(function(slot){
+                var tid=survivorPicks[slot.key]||myPath[slot.key];var t=tid?getTeam(tid):null;
+                var wp=t?getWinProb(t,slot.round):null;var ml=null,dec=null;
+                if(wp&&wp>0&&wp<1){dec=1/wp;ml=wp>=0.5?-(wp/(1-wp)*100):((1-wp)/wp*100);}
+                return{slot:slot,team:t,wp:wp,ml:ml,dec:dec};
+              });
+              var allHaveWp=legs.every(function(l){return l.wp!==null;});
+              var fairMult=allHaveWp?legs.reduce(function(acc,l){return acc*(l.dec||1);},1):null;
+              var vigFactor=Math.pow(0.955,12);var vigMult=fairMult?fairMult*vigFactor:null;
+              return ce("div",{},
+                ce("div",{style:{overflowX:"auto",marginBottom:"12px"}},ce("table",{},
+                  ce("thead",{},ce("tr",{},TH("Slot"),TH("Team"),TH("Win Prob",{textAlign:"center"}),TH("Fair ML",{textAlign:"center"}),TH("Dec Odds",{textAlign:"center"}))),
+                  ce("tbody",{},legs.map(function(l){
+                    var mlStr=l.ml===null?"--":l.ml>=0?"+"+Math.round(l.ml):Math.round(l.ml).toString();
+                    var edgeColor=l.wp>=0.75?"#4ade80":l.wp>=0.55?"#86efac":l.wp>=0.45?"#fde68a":"#fb923c";
+                    return ce("tr",{key:l.slot.key},
+                      TD(ce("span",{style:{fontSize:"10px",color:"#64748b"}},l.slot.label)),
+                      TD(l.team?ce("span",{style:{fontWeight:600}},l.team.name):ce("span",{style:{color:"#334155"}},"--")),
+                      TD(l.wp?ce("span",{style:{color:edgeColor,fontWeight:700}},(l.wp*100).toFixed(1)+"%"):ce("span",{style:{color:"#334155"}},"--"),{textAlign:"center"}),
+                      TD(ce("span",{style:{color:l.ml===null?"#334155":l.ml<0?"#f87171":"#4ade80",fontWeight:700}},mlStr),{textAlign:"center"}),
+                      TD(ce("span",{style:{color:"#94a3b8"}},l.dec?"×"+l.dec.toFixed(2):"--"),{textAlign:"center"})
+                    );
+                  }))
+                )),
+                ce("div",{style:{display:"flex",gap:"10px",flexWrap:"wrap"}},
+                  [["Combined Win Prob",allHaveWp?(legs.reduce(function(a,l){return a*l.wp;},1)*100).toFixed(2)+"%":"--","#94a3b8"],
+                   ["Fair Parlay Mult",fairMult?"×"+fairMult.toFixed(1):"--","#60a5fa"],
+                   ["Fair $100 Payout",fairMult?"$"+(100*fairMult).toFixed(0):"--","#4ade80"],
+                   ["Book Est. ($100)",vigMult?"$"+(100*vigMult).toFixed(0):"--","#fbbf24"],
+                   ["Vig Haircut",fairMult&&vigMult?"-$"+((fairMult-vigMult)*100).toFixed(0):"--","#f87171"]
+                  ].map(function(item){return ce("div",{key:item[0],style:{background:"#1e293b",borderRadius:"8px",padding:"10px 14px",flex:"1",minWidth:"120px",border:"1px solid #334155"}},
+                    ce("div",{style:{fontSize:"9px",color:"#64748b",marginBottom:"4px"}},item[0]),
+                    ce("div",{style:{fontSize:"18px",fontWeight:700,color:item[2]}},item[1])
+                  );})
+                )
+              );
+            }())
+          ),
           // Summary strip
           ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"10px 12px",border:"1px solid #334155"}},
-            ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#94a3b8",marginBottom:"6px"}},"Your Full Plan ("+(survMode==="chalk"?"Chalk":survMode==="contr"?"Contrarian":survMode==="simback"?"Sim Backwards":"Sim Forward")+" path · locked picks shown in green)"),
+            ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#94a3b8",marginBottom:"6px"}},"Your Full Plan"),
             ce("div",{style:{display:"flex",gap:"5px",flexWrap:"wrap"}},
               SURVIVOR_SLOTS.map(function(slot){
-                var tid=survivorPicks[slot.key]||myPath[slot.key];
-                var t=tid?getTeam(tid):null;
-                var wp=t?getWinProb(t,slot.round):0;
-                var isLocked=!!survivorPicks[slot.key];
+                var tid=survivorPicks[slot.key]||myPath[slot.key];var t=tid?getTeam(tid):null;
+                var wp=t?getWinProb(t,slot.round):0;var isLocked=!!survivorPicks[slot.key];
                 return ce("div",{key:slot.key,style:{background:"#0f172a",borderRadius:"6px",padding:"5px 8px",minWidth:"90px",border:"1px solid "+(isLocked?"#166534":"#1e3a5f")}},
                   ce("div",{style:{fontSize:"8px",color:"#475569",marginBottom:"1px"}},slot.label),
-                  t?ce("div",{},
-                    ce("div",{style:{fontSize:"10px",fontWeight:700,color:isLocked?"#4ade80":"#93c5fd",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.name),
-                    ce("div",{style:{fontSize:"9px",color:pickColor(wp),fontWeight:600}},(wp*100).toFixed(1)+"%")
-                  ):ce("div",{style:{fontSize:"9px",color:"#334155"}},"--")
+                  t?ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:isLocked?"#4ade80":"#93c5fd",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.name),ce("div",{style:{fontSize:"9px",color:pickColor(wp),fontWeight:600}},(wp*100).toFixed(1)+"%")):ce("div",{style:{fontSize:"9px",color:"#334155"}},"--")
                 );
               })
             ),
@@ -1555,218 +1566,6 @@ function App(){
     );
   }
 
-  // ── GUIDE TAB ─────────────────────────────────────────────────────────────
-  function GuideTab(){
-    try{
-    var _sec=useState("checklist"),sec=_sec[0],setSec=_sec[1];
-    var sections=[
-      ["checklist","✅ Pre-Tournament Checklist"],
-      ["teams","🏀 Updating Teams & Ratings"],
-      ["bracket","🗂️ Updating the Bracket"],
-      ["adjs","⚡ Adjustments"],
-      ["calcutta","💰 Calcutta EV Tab"],
-      ["compare","⚖️ Compare Tab"],
-      ["live","🏆 Live Tab"],
-      ["survivor","🎯 Survivor Tab"],
-      ["history","📜 History Tab"],
-      ["code","🛠️ Code Update Reference"],
-    ];
-
-    var stH2={fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"};
-    var stH3={fontSize:"12px",fontWeight:700,color:"#f59e0b",marginBottom:"4px",marginTop:"10px"};
-    var stP={fontSize:"11px",color:"#94a3b8",lineHeight:1.8,marginBottom:"4px"};
-    var stLi={fontSize:"11px",color:"#94a3b8",lineHeight:2,paddingLeft:"14px"};
-    var stWarn={background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#fbbf24",marginBottom:"6px"};
-    var stGood={background:"rgba(22,101,52,0.12)",border:"1px solid rgba(22,101,52,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#4ade80",marginBottom:"6px"};
-    var stCode={background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",padding:"8px 10px",fontFamily:"monospace",fontSize:"10px",color:"#4ade80",marginBottom:"8px",whiteSpace:"pre-wrap"};
-
-    function renderSection(s){
-      if(s==="checklist")return ce("div",{},
-        ce("div",{style:stH2},"✅ Pre-Tournament Checklist"),
-        ce("div",{style:stWarn},"Do these steps IN ORDER about 1 week before Selection Sunday."),
-        ce("div",{style:stH3},"Step 1 — Update Team Ratings"),
-        ce("div",{style:stLi},"• Go to kenpom.com and barttorvik.com for current ratings"),
-        ce("div",{style:stLi},"• You only need the 64 tournament teams once bracket is announced"),
-        ce("div",{style:stLi},"• Use Setup tab → Paste Ratings to bulk-load (Name, KenPom, Barthag)"),
-        ce("div",{style:stH3},"Step 2 — Update the Bracket (in code)"),
-        ce("div",{style:stLi},"• Open index.html in a text editor"),
-        ce("div",{style:stLi},"• Find DEFAULT_TEAMS — update all 64 teams"),
-        ce("div",{style:stLi},"• Find FIRST_FOUR — update the 4 play-in games"),
-        ce("div",{style:stLi},"• Find JASON_SHEET_ADJ / CLAUDE_ADJ — update your opinion adjustments"),
-        ce("div",{style:stH3},"Step 3 — Add This Year's Calcutta Data"),
-        ce("div",{style:stLi},"• After the auction, paste results into History tab → click Analyze"),
-        ce("div",{style:stH3},"Step 4 — Reset App State"),
-        ce("div",{style:stLi},"• Setup tab → Reset, or create a new Profile for the new year"),
-        ce("div",{style:stH3},"Step 5 — Run First Simulation"),
-        ce("div",{style:stLi},"• Set blend slider (50/50 default), click Run Sim with 10K sims"),
-        ce("div",{style:stLi},"• 1-seeds should show ~85-90% R64 win prob"),
-        ce("div",{style:stGood},"Ready. Use tabs in this order: Live → Win Probs → Calcutta EV → Survivor")
-      );
-      if(s==="teams")return ce("div",{},
-        ce("div",{style:stH2},"🏀 Updating Teams & Ratings"),
-        ce("div",{style:stH3},"Option A — Paste Ratings (easiest)"),
-        ce("div",{style:stP},"Setup tab → Paste Ratings button. Paste 3 columns tab-separated:"),
-        ce("div",{style:stCode},"Duke\t38.90\t0.9813\nFlorida\t33.79\t0.9732\nHouston\t33.43\t0.9709"),
-        ce("div",{style:stWarn},"KenPom = point differential (+5 to +40). Barthag = 0 to 1 scale. Don't mix them up."),
-        ce("div",{style:stH3},"Option B — Edit in the Table"),
-        ce("div",{style:stP},"Click any row in Setup tab to edit ratings/seed/name inline."),
-        ce("div",{style:stH3},"Where to get ratings"),
-        ce("div",{style:stLi},"• KenPom: kenpom.com (subscription ~$20/yr)"),
-        ce("div",{style:stLi},"• BartTorvik: barttorvik.com (free, use T-Rank/Barthag column)"),
-        ce("div",{style:stH3},"Name Matching"),
-        ce("div",{style:stP},"App fuzzy-matches names. Aliases hardcoded: UConn=Connecticut, Ole Miss=Mississippi, etc. Check Unmatched list in status bar if paste misses teams.")
-      );
-      if(s==="bracket")return ce("div",{},
-        ce("div",{style:stH2},"🗂️ Updating the Bracket in Code"),
-        ce("div",{style:stWarn},"Requires editing index.html in a text editor. Make a backup first."),
-        ce("div",{style:stH3},"Finding DEFAULT_TEAMS"),
-        ce("div",{style:stP},"Search for: var DEFAULT_TEAMS=["),
-        ce("div",{style:stCode},"{id:1, name:\"Florida\", seed:1, region:\"South\",\n kenpom:33.79, torvik:0.9732}"),
-        ce("div",{style:stLi},"• id: unique number 1-64, keep sequential"),
-        ce("div",{style:stLi},"• region: exactly \"South\", \"East\", \"West\", or \"Midwest\""),
-        ce("div",{style:stLi},"• kenpom: efficiency margin (higher = better)"),
-        ce("div",{style:stLi},"• torvik: Barthag 0-1 scale (0.97+ = elite)"),
-        ce("div",{style:stH3},"Finding FIRST_FOUR"),
-        ce("div",{style:stP},"Search for: var FIRST_FOUR=["),
-        ce("div",{style:stWarn},"slotId must match the DEFAULT_TEAMS id of the placeholder the winner replaces. Get this wrong and the bracket breaks."),
-        ce("div",{style:stH3},"Bracket Structure"),
-        ce("div",{style:stP},"R64 pods: [1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15]. Seeds auto-matched within each region.")
-      );
-      if(s==="adjs")return ce("div",{},
-        ce("div",{style:stH2},"⚡ Adjustments"),
-        ce("div",{style:stH3},"Three adjustment types"),
-        ce("div",{style:stLi},"• Sheet Adj (yellow): your personal opinion override"),
-        ce("div",{style:stLi},"• PG Adj (purple): second analytics source adjustment"),
-        ce("div",{style:stLi},"• Inj Adj (red): injury impact — always active, not toggled"),
-        ce("div",{style:stP},"Sheet + PG are averaged → Blended Adj. Toggle with ⚡ Adjs ON/OFF button."),
-        ce("div",{style:stH3},"Updating for a new year"),
-        ce("div",{style:stP},"Search for var JASON_SHEET_ADJ= and var CLAUDE_ADJ= in the code:"),
-        ce("div",{style:stCode},"var JASON_SHEET_ADJ={\n  \"Duke\":2.0,\n  \"Houston\":1.5,\n  \"Georgia\":-2.0\n};"),
-        ce("div",{style:stWarn},"Units are point-differential. +2.0 = team is 2pts better than ratings say. Stay conservative — ±3 is a big adjustment.")
-      );
-      if(s==="calcutta")return ce("div",{},
-        ce("div",{style:stH2},"💰 Calcutta EV Tab"),
-        ce("div",{style:stH3},"Setup"),
-        ce("div",{style:stLi},"• Enter pot size in Total Pot field"),
-        ce("div",{style:stLi},"• Enter bid/sale prices in yellow column"),
-        ce("div",{style:stLi},"• Check ✓ for teams YOU own"),
-        ce("div",{style:stH3},"Key columns"),
-        ce("div",{style:stLi},"• Exp Return: sim-based expected payout value"),
-        ce("div",{style:stLi},"• Full EV $: profit/loss vs price paid (checked teams only)"),
-        ce("div",{style:stLi},"• R1 Edge: sim edge vs market spread"),
-        ce("div",{style:stLi},"• Blend %: average of your sim + Compare source B"),
-        ce("div",{style:stLi},"• ML=Calc: moneyline equivalent for underdog R64 value"),
-        ce("div",{style:stH3},"Payouts (hardcoded)"),
-        ce("div",{style:stP},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7% of pot. Search RPAY to change.")
-      );
-      if(s==="compare")return ce("div",{},
-        ce("div",{style:stH2},"⚖️ Compare Tab"),
-        ce("div",{style:stP},"Compares your sim against another EV source. Blended values flow to Calcutta tab."),
-        ce("div",{style:stH3},"How to use"),
-        ce("div",{style:stLi},"1. Calcutta tab → Export for Compare (or Compare tab → Auto-fill Source A)"),
-        ce("div",{style:stLi},"2. Paste other source into Source B"),
-        ce("div",{style:stLi},"3. Click Compare"),
-        ce("div",{style:stLi},"4. Go back to Calcutta tab — Blend columns now live"),
-        ce("div",{style:stH3},"Agreement tags"),
-        ce("div",{style:stLi},"• Agree < $50 · Close $50-200 · Diff $200-500 · Big Diff $500+"),
-        ce("div",{style:stWarn},"Blend % = average EV / pot. It is a relative pot share, not a win probability.")
-      );
-      if(s==="live")return ce("div",{},
-        ce("div",{style:stH2},"🏆 Live Tab"),
-        ce("div",{style:stH3},"During the tournament"),
-        ce("div",{style:stLi},"• Enter First Four results first"),
-        ce("div",{style:stLi},"• Click Win as games go final — sim re-runs automatically"),
-        ce("div",{style:stLi},"• Eliminated teams grey out in Win Probs tab"),
-        ce("div",{style:stH3},"Spread inputs (Win Probs tab)"),
-        ce("div",{style:stP},"Each alive team shows a spread input for their current game. Negative = team is favored. Entering on one team auto-populates their opponent too."),
-        ce("div",{style:stH3},"Undoing"),
-        ce("div",{style:stP},"Click Undo on any game card. Clear All wipes the full bracket including First Four."),
-        ce("div",{style:stWarn},"Clear All also resets First Four — re-enter those results first.")
-      );
-      if(s==="survivor")return ce("div",{},
-        ce("div",{style:stH2},"🎯 Survivor Tab"),
-        ce("div",{style:stH3},"Pick schedule (10 picks)"),
-        ce("div",{style:stLi},"• R64 Thu: 2 picks (South/East) · R64 Fri: 2 picks (West/Midwest)"),
-        ce("div",{style:stLi},"• R32 Sat: 1 · R32 Sun: 1 · S16 Thu: 1 · S16 Fri: 1"),
-        ce("div",{style:stLi},"• E8 weekend: 2 total · F4: 1 · NCG: 1"),
-        ce("div",{style:stH3},"Four strategies — click a card to activate"),
-        ce("div",{style:stLi},"• Chalk: max probability, backwards from champion"),
-        ce("div",{style:stLi},"• Contrarian: win prob x (1-popularity), avoids crowded picks"),
-        ce("div",{style:stLi},"• Sim Backwards: your sim cumulative probs from champion down"),
-        ce("div",{style:stLi},"• Sim Forward: greedy conditional win prob forward"),
-        ce("div",{style:stH3},"Locking picks"),
-        ce("div",{style:stP},"Click a team row to lock your pick (green check). Optimizer re-optimizes remaining slots instantly. Click again to unlock."),
-        ce("div",{style:stH3},"Parlay Calculator"),
-        ce("div",{style:stP},"Shows fair odds parlay value for your 12-pick plan + book-adjusted estimate (~4.5% vig/leg).")
-      );
-      if(s==="history")return ce("div",{},
-        ce("div",{style:stH2},"📜 History Tab"),
-        ce("div",{style:stP},"2021-2025 Calcutta data pre-loaded (336 records). Permanent, hardcoded."),
-        ce("div",{style:stH3},"Adding a new year (temporary)"),
-        ce("div",{style:stP},"Paste into the text box in this format, then click Analyze:"),
-        ce("div",{style:stCode},"year\tTeam\tRegion\tSeed\tPurchaser\tPrice\n2026\tDuke\tEast\t1\tJawn\t13000"),
-        ce("div",{style:stH3},"Adding permanently (stays next year)"),
-        ce("div",{style:stP},"Add rows to the HIST_RAW string at the top of index.html, following the same tab-separated format."),
-        ce("div",{style:stWarn},"Never change the header row at the top of HIST_RAW — the parser skips line 1.")
-      );
-      if(s==="code")return ce("div",{},
-        ce("div",{style:stH2},"🛠️ Code Update Reference"),
-        ce("div",{style:stH3},"Variables to update every year"),
-        ce("div",{style:{overflowX:"auto"}},ce("table",{},
-          ce("thead",{},ce("tr",{},TH("What"),TH("Search for"),TH("Notes"))),
-          ce("tbody",{},[
-            ["64 bracket teams","var DEFAULT_TEAMS=[","Seed, region, name, ratings for all 64"],
-            ["First Four","var FIRST_FOUR=[","4 play-in games + slotIds"],
-            ["Sheet adjustments","var JASON_SHEET_ADJ=","Your opinion adjustments"],
-            ["PG adjustments","var CLAUDE_ADJ=","Second source adjustments"],
-            ["Historical data","var HIST_RAW=","Paste new auction year here"],
-            ["Payouts","var RPAY=","Only if pool structure changes"],
-            ["Survivor slots","var SURVIVOR_SLOTS=","Only if pick schedule changes"],
-            ["Injury fallback","var INJURY_DATA=","Static data if API fails"],
-          ].map(function(r){return ce("tr",{key:r[0]},
-            TD(ce("span",{style:{fontWeight:600,fontSize:"10px"}},r[0])),
-            TD(ce("span",{style:{fontFamily:"monospace",fontSize:"10px",color:"#4ade80"}},r[1])),
-            TD(ce("span",{style:{fontSize:"10px",color:"#64748b"}},r[2]))
-          );}))
-        )),
-        ce("div",{style:stH3},"Deploy workflow"),
-        ce("div",{style:stLi},"• Edit index.html locally in VS Code"),
-        ce("div",{style:stLi},"• Test by opening file:// in browser"),
-        ce("div",{style:stLi},"• git add index.html → git commit → git push → Netlify auto-deploys"),
-        ce("div",{style:stH3},"Profiles and state"),
-        ce("div",{style:stP},"State saves to localStorage per profile. Create a new profile each year (e.g. Jason 2027) to preserve prior year data."),
-        ce("div",{style:stWarn},"localStorage is browser-specific. Use Export/Import to move state between computers.")
-      );
-      return ce("div",{style:{color:"#475569",padding:"20px"}},"Select a section from the left.");
-    }
-
-    var sections=[
-      ["checklist","✅ Checklist"],["teams","🏀 Ratings"],["bracket","🗂️ Bracket"],
-      ["adjs","⚡ Adjustments"],["calcutta","💰 Calcutta"],["live","🏆 Live"],
-      ["survivor","🎯 Survivor"],["history","📜 History"],["code","🛠️ Code Ref"]
-    ];
-    return ce("div",{style:{padding:"14px"}},
-      ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 16px",marginBottom:"14px",border:"1px solid #334155"}},
-        ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"2px"}},"📖 App Guide & Documentation"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Everything you need to set up and use this app each year — start with the checklist")
-      ),
-      ce("div",{style:{display:"flex",gap:"12px",alignItems:"flex-start"}},
-        ce("div",{style:{width:"150px",flexShrink:0,display:"flex",flexDirection:"column",gap:"3px"}},
-          sections.map(function(pair){
-            return ce("button",{key:pair[0],onClick:function(){setSec(pair[0]);},
-              style:{background:sec===pair[0]?"#1e40af":"#1e293b",border:"1px solid "+(sec===pair[0]?"#3b82f6":"#334155"),borderRadius:"6px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:sec===pair[0]?700:400,color:sec===pair[0]?"#fff":"#94a3b8",textAlign:"left"}},
-              pair[1]);
-          })
-        ),
-        ce("div",{style:{flex:1,background:"#111827",borderRadius:"10px",padding:"16px",border:"1px solid #1e293b",minHeight:"400px"}},
-          renderSection(sec)
-        )
-      )
-    );
-    }catch(e){return ce("div",{style:{padding:"20px",color:"#f87171"}},"Guide error: "+e.message);}
-  }
-
-  // ── HISTORY TAB ───────────────────────────────────────────────────────────
   function HistTab(){
     var ha=histAnalysis;
     var sectionStyle={marginBottom:"20px",background:"#111827",borderRadius:"10px",padding:"14px",border:"1px solid #1e293b"};
@@ -1774,9 +1573,9 @@ function App(){
     return ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 14px",marginBottom:"14px",border:"1px solid #334155"}},
         ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"6px"}},"📜 Historical Calcutta Analysis"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"2021–2025 data pre-loaded. Paste additional years below (year, team, region, seed, purchaser, price — tab or comma separated)."),
+        ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"2021–2025 data pre-loaded. Paste additional years below."),
         ce("div",{style:{display:"grid",gridTemplateColumns:"1fr auto",gap:"10px",alignItems:"start",marginBottom:"10px"}},
-          ce("textarea",{value:futureRaw,onChange:function(ev){setFutureRaw(ev.target.value);},placeholder:"year\tTeam\tRegion\tSeed\tPurchaser\tPurchase Price\n2026\tDuke\tEast\t1\tJawn\t$12000",style:{width:"100%",height:"90px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
+          ce("textarea",{value:futureRaw,onChange:function(ev){setFutureRaw(ev.target.value);},placeholder:"year\tTeam\tRegion\tSeed\tPurchaser\tPurchase Price",style:{width:"100%",height:"90px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
           ce("button",{onClick:doHistAnalysis,disabled:histLoading,style:bSt({background:histLoading?"#334155":"#1d4ed8",color:"#fff",minWidth:"110px",height:"90px",fontSize:"13px"})},histLoading?"⏳ Analyzing...":"🔍 Analyze")
         ),
         ce("div",{style:{display:"flex",gap:"8px",alignItems:"center",flexWrap:"wrap"}},
@@ -1827,7 +1626,6 @@ function App(){
     );
   }
 
-  // ── RENDER ────────────────────────────────────────────────────────────────
   return ce("div",{style:{background:"#0f172a",minHeight:"100vh",color:"#f1f5f9",fontFamily:"system-ui,sans-serif"}},
     ce("div",{style:{background:"linear-gradient(135deg,#1e3a5f,#0f172a)",padding:"10px 16px",borderBottom:"2px solid #1e40af"}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:"10px",flexWrap:"wrap"}},
@@ -1851,8 +1649,8 @@ function App(){
         ce("div",{style:{display:"flex",alignItems:"center",gap:"4px",background:"#1e293b",border:"1px solid #334155",borderRadius:"7px",padding:"3px 8px",fontSize:"11px",color:"#64748b"}},
           ce("span",{style:{fontSize:"10px",color:"#475569"}},"seed:"),
           ce("span",{style:{fontFamily:"monospace",fontSize:"10px",color:"#60a5fa"}},simSeed),
-          ce("button",{onClick:function(){doRunSim(false,Math.floor(Math.random()*2147483647));},title:"Randomize seed and re-run",style:{background:"none",border:"none",cursor:"pointer",color:"#60a5fa",fontSize:"14px",lineHeight:1,padding:"0 2px"}},"🎲"),
-          simSeed!==20250316?ce("button",{onClick:function(){doRunSim(false,20250316);},title:"Reset to default seed",style:{background:"none",border:"none",cursor:"pointer",color:"#475569",fontSize:"11px",lineHeight:1,padding:"0 2px"}},"↺"):null
+          ce("button",{onClick:function(){doRunSim(false,Math.floor(Math.random()*2147483647));},title:"Randomize seed",style:{background:"none",border:"none",cursor:"pointer",color:"#60a5fa",fontSize:"14px",lineHeight:1,padding:"0 2px"}},"🎲"),
+          simSeed!==20250316?ce("button",{onClick:function(){doRunSim(false,20250316);},title:"Reset seed",style:{background:"none",border:"none",cursor:"pointer",color:"#475569",fontSize:"11px",lineHeight:1,padding:"0 2px"}},"↺"):null
         ),
         ce("button",{onClick:function(){doRunSim(true);},disabled:simming,style:bSt({background:simming?"#334155":"#1d4ed8",color:"#fff",minWidth:"90px",cursor:simming?"not-allowed":"pointer"})},simming?"⏳ Running...":"▶ Run Sim")
       )
@@ -1884,14 +1682,14 @@ function App(){
           gamesEntered>0?ce("button",{onClick:clearAllLW,style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d",padding:"5px 12px",fontSize:"11px"})},"Clear All"):null
         ),
         ce("div",{style:{marginBottom:"16px",background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},
-          ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},"🏀 First Four — Dayton, Ohio (Mar 17-18)"),
+          ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},"🏀 First Four"),
           ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:"10px"}},
             FIRST_FOUR.map(function(ff){var picked=ffWinners[ff.id];return ce("div",{key:ff.id,style:{background:"#1e293b",borderRadius:"8px",padding:"10px",border:"1px solid "+(picked?"#166534":"#334155")}},ce("div",{style:{fontSize:"9px",color:"#f59e0b",marginBottom:"6px",fontWeight:600}},ff.label),ce("div",{style:{display:"flex",flexDirection:"column",gap:"3px"}},[["A",ff.teamA],["B",ff.teamB]].map(function(pair){var side=pair[0],t=pair[1];var isW=picked===side,isL=picked&&picked!==side;var bl=((1-blendW)*t.kenpom+blendW*b2pd(t.torvik));return ce("div",{key:side,style:{display:"flex",alignItems:"center",gap:"5px",padding:"5px 8px",borderRadius:"5px",background:isW?"rgba(22,101,52,0.3)":isL?"rgba(0,0,0,0.2)":"#0f172a",opacity:isL?0.45:1}},ce("span",{style:{fontWeight:600,fontSize:"11px",flex:1}},t.name),ce("span",{style:{fontSize:"9px",color:"#60a5fa",marginRight:"4px"}},(bl>0?"+":"")+bl.toFixed(1)),!picked?ce("button",{onClick:function(){pickFFWinner(ff,side);},style:{fontSize:"9px",padding:"2px 6px",background:"#1d4ed8",color:"#fff",border:"none",borderRadius:"3px",cursor:"pointer"}},"Win"):null,isW?ce("span",{style:{fontSize:"9px",color:"#4ade80",fontWeight:700}},"✓ ADV"):null);})),picked?ce("button",{onClick:function(){clearFFWinner(ff);},style:{fontSize:"8px",padding:"1px 5px",background:"#3b1a1a",color:"#fca5a5",border:"none",borderRadius:"3px",cursor:"pointer",marginTop:"6px"}},"↩ Undo"):null);})
           )
         ),
         ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(580px,1fr))",gap:"16px"}},
-          bracketState.regions.map(function(reg){return ce("div",{key:reg.name,style:{background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},reg.name+" Region"),ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px"}},ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"R64"),reg.r64.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"R32"),reg.r32.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"S16"),reg.s16.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"E8"),ce(GameCard,{game:reg.e8}))));}))
-        ,ce("div",{style:{marginTop:"16px",background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},"Final Four & Championship"),ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"12px",maxWidth:"600px"}},ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"Final Four"),bracketState.f4.map(function(g){return ce(GameCard,{key:g.gk,game:g,showRound:true});})),ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center"}},ce("div",{style:{fontSize:"20px"}},"🏆")),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#f59e0b",marginBottom:"6px",textAlign:"center"}},"Championship"),ce(GameCard,{game:bracketState.ncg,showRound:true}))))
+          bracketState.regions.map(function(reg){return ce("div",{key:reg.name,style:{background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},reg.name+" Region"),ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px"}},ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"R64"),reg.r64.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"R32"),reg.r32.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"S16"),reg.s16.map(function(g){return ce(GameCard,{key:g.gk,game:g});})),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"E8"),ce(GameCard,{game:reg.e8}))));})),
+        ce("div",{style:{marginTop:"16px",background:"#111827",borderRadius:"10px",padding:"12px",border:"1px solid #1e293b"}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#f59e0b",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"}},"Final Four & Championship"),ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"12px",maxWidth:"600px"}},ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#475569",marginBottom:"6px",textAlign:"center"}},"Final Four"),bracketState.f4.map(function(g){return ce(GameCard,{key:g.gk,game:g,showRound:true});})),ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center"}},ce("div",{style:{fontSize:"20px"}},"🏆")),ce("div",{},ce("div",{style:{fontSize:"10px",fontWeight:700,color:"#f59e0b",marginBottom:"6px",textAlign:"center"}},"Championship"),ce(GameCard,{game:bracketState.ncg,showRound:true}))))
       )
     ):null,
 
@@ -1904,9 +1702,7 @@ function App(){
           gamesEntered>0?ce("span",{style:{fontSize:"10px",color:"#4ade80"}},"🔴 "+gamesEntered+" live result(s)"):null,
           simTime?ce("span",{style:{fontSize:"10px",color:"#64748b"}},simTime+"s"):null,
           ce("div",{style:{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center"}},
-            ce("select",{value:varCount,onChange:function(ev){setVarCount(parseInt(ev.target.value));},style:sSt({fontSize:"11px",padding:"4px 8px"})},
-              ce("option",{value:5},"5 runs"),ce("option",{value:10},"10 runs"),ce("option",{value:20},"20 runs"),ce("option",{value:50},"50 runs")
-            ),
+            ce("select",{value:varCount,onChange:function(ev){setVarCount(parseInt(ev.target.value));},style:sSt({fontSize:"11px",padding:"4px 8px"})},ce("option",{value:5},"5 runs"),ce("option",{value:10},"10 runs"),ce("option",{value:20},"20 runs"),ce("option",{value:50},"50 runs")),
             ce("button",{onClick:runVarianceAnalysis,disabled:varRunning,style:bSt({background:varRunning?"#334155":"#065f46",color:varRunning?"#94a3b8":"#4ade80",border:"1px solid "+(varRunning?"#334155":"#166634"),minWidth:"110px"})},varRunning?"⏳ Running...":"📊 Variance Run"),
             varData?ce("button",{onClick:function(){setVarData(null);},style:bSt({background:"#3b1a1a",color:"#fca5a5",border:"1px solid #7f1d1d",fontSize:"11px",padding:"5px 10px"})},"Clear"):null,
             ce("button",{onClick:function(){doRunSim(false);},disabled:simming,style:bSt({background:"#1d4ed8",color:"#fff"})},simming?"...":"Re-run")
@@ -1969,12 +1765,12 @@ function App(){
     tab==="compare"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"10px 14px",marginBottom:"12px"}},
         ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa",marginBottom:"4px"}},"⚖️ Calcutta EV Comparison"),
-        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Compare your sim against another app. Blend % and Blend Value flow live into the Calcutta EV tab once you run Compare.")
+        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Compare your sim against another app.")
       ),
       ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}},
         ce("div",{style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"12px"}},
           ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},ce("label",{style:{fontSize:"11px",fontWeight:700,color:"#60a5fa"}},"📊 Source A — Your Sim"),ce("button",{onClick:autoFillA,style:bSt({background:"#065f46",color:"#4ade80",border:"1px solid #166534",fontSize:"10px",padding:"4px 10px"})},"⚡ Auto-fill from Sim")),
-          ce("textarea",{value:cmpA,onChange:function(ev){setCmpA(ev.target.value);},placeholder:"Click Auto-fill or paste Seed/Team/Region/Pot%/Value",style:{width:"100%",height:"130px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
+          ce("textarea",{value:cmpA,onChange:function(ev){setCmpA(ev.target.value);},placeholder:"Click Auto-fill or paste data",style:{width:"100%",height:"130px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",fontFamily:"monospace",resize:"vertical",outline:"none"}}),
           ce("div",{style:{fontSize:"10px",color:"#475569",marginTop:"4px"}},parseCmpSource(cmpA).length?" ✓ "+parseCmpSource(cmpA).length+" teams":"Accepts tab or comma-separated")
         ),
         ce("div",{style:{background:"#1e293b",border:"1px solid #334155",borderRadius:"8px",padding:"12px"}},
@@ -2015,8 +1811,7 @@ function App(){
       ):ce("div",{style:{textAlign:"center",padding:"50px",color:"#475569"}},ce("div",{style:{fontSize:"32px",marginBottom:"12px"}},"⚖️"),ce("div",{style:{fontSize:"13px",fontWeight:600}},"Paste data and click Compare"))
     ):null,
 
-    tab==="survivor"?ce(SurvivorTab,null):null,
-
+    tab==="history"?ce(HistTab,null):null,
     tab==="injuries"?ce("div",{style:{padding:"14px"}},
       ce("div",{style:{background:"#0c1a2e",border:"1px solid #1e40af",borderRadius:"8px",padding:"12px 16px",marginBottom:"12px",display:"flex",gap:"12px",alignItems:"center",flexWrap:"wrap"}},
         ce("div",{style:{flex:1}},ce("div",{style:{fontSize:"13px",fontWeight:700,color:"#60a5fa"}},"🏥 Tournament Injury Report"),ce("div",{style:{fontSize:"10px",color:"#64748b",marginTop:"2px"}},"Known injuries entering the 2026 tournament.")),
@@ -2032,16 +1827,13 @@ function App(){
           injData.teams.map(function(t){var sc=t.severity==="High"?"#f87171":t.severity==="Medium"?"#fb923c":t.severity==="Low"?"#fde68a":"#4ade80";var sb=t.severity==="High"?"rgba(127,29,29,0.2)":t.severity==="Medium"?"rgba(124,45,18,0.2)":t.severity==="Low"?"rgba(113,63,18,0.15)":"rgba(22,101,52,0.1)";return ce("div",{key:t.team,style:{background:"#1e293b",borderRadius:"8px",padding:"12px",border:"1px solid "+(t.severity==="None"?"#1e293b":"#334155")}},ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:t.injuries.length?"8px":"0"}},ce("div",{style:{fontWeight:700,fontSize:"12px"}},t.team),ce("span",{style:{fontSize:"9px",fontWeight:700,color:sc,background:sb,padding:"2px 7px",borderRadius:"10px"}},t.severity==="None"?"✓ Healthy":t.severity)),t.injuries.map(function(inj,i){var ic=inj.status==="Out"?"#f87171":inj.status==="Doubtful"?"#fb923c":inj.status==="Questionable"?"#fde68a":"#94a3b8";return ce("div",{key:i,style:{background:"#0f172a",borderRadius:"5px",padding:"6px 8px",marginTop:"4px"}},ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}},ce("span",{style:{fontWeight:600,fontSize:"11px"}},inj.player),ce("span",{style:{fontSize:"9px",color:ic,fontWeight:700}},inj.status)),ce("div",{style:{fontSize:"10px",color:"#94a3b8"}},inj.detail));}));}))
       ):null
     ):null,
-
-    tab==="history"?ce(HistTab,null):null,
-
+    tab==="survivor"?ce(SurvivorTab,null):null,
     tab==="guide"?ce(GuideTab,null):null,
 
-    // ── MODALS ────────────────────────────────────────────────────────────────
     pmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Paste Ratings"),ce("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"12px"}},"Copy name/kenpom/torvik columns from Google Sheet and paste below."),ce("textarea",{value:pt,onChange:function(ev){setPt(ev.target.value);},placeholder:"name\tkenpom\ttorvik",style:{width:"100%",height:"160px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"11px",resize:"vertical",fontFamily:"monospace"}}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){setPmO(false);setPt("");},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),ce("button",{onClick:applyPaste,disabled:!pt.trim(),style:bSt({background:pt.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Apply")))):null,
     emO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Export State"),ce("textarea",{readOnly:true,value:et,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"100px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace"}}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(et);},style:bSt({background:"#166534",color:"#4ade80"})},"Copy"),ce("button",{onClick:function(){setEmO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
     imO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Import State"),ce("textarea",{value:it,onChange:function(ev){setIt(ev.target.value);setIe("");},placeholder:"Paste exported state...",style:{width:"100%",height:"100px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace"}}),ie?ce("div",{style:{color:"#f87171",fontSize:"11px",marginTop:"6px"}},ie):null,ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){setImO(false);setIt("");setIe("");},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),ce("button",{onClick:doImport,disabled:!it.trim(),style:bSt({background:it.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Apply")))):null,
-    calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export"),ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all (Ctrl+A), copy, then paste into Source A — or use Auto-fill on Compare tab."),ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),ce("button",{onClick:function(){setCalcExO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
+    calcExO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"580px",width:"95%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"4px"}},"📋 Calcutta Export"),ce("div",{style:{fontSize:"10px",color:"#64748b",marginBottom:"10px"}},"Select all (Ctrl+A), copy, then paste into Source A."),ce("textarea",{readOnly:true,value:calcExT,onClick:function(ev){ev.target.select();},style:{width:"100%",height:"240px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#4ade80",padding:"8px",fontSize:"10px",resize:"none",fontFamily:"monospace",lineHeight:1.6}}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){if(navigator.clipboard)navigator.clipboard.writeText(calcExT);},style:bSt({background:"#166534",color:"#4ade80"})},"Try Copy"),ce("button",{onClick:function(){setCalcExO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Close")))):null,
     npmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"380px",width:"90%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"10px"}},"New Profile"),ce("input",{value:npn,onChange:function(ev){setNpn(ev.target.value);},placeholder:"Profile name",style:Object.assign({},iSt({textAlign:"left",padding:"8px 12px",width:"100%",fontSize:"13px"}),{marginBottom:"12px"})}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end"}},ce("button",{onClick:function(){setNpmO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),ce("button",{onClick:createProfile,disabled:!npn.trim(),style:bSt({background:npn.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Create")))):null,
     dcO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"380px",width:"90%",border:"1px solid #7f1d1d"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"10px",color:"#fca5a5"}},"Delete Profile?"),ce("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"16px"}},"Permanently delete \""+active+"\" and all its data?"),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end"}},ce("button",{onClick:function(){setDcO(false);},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),ce("button",{onClick:deleteProfile,style:bSt({background:"#7f1d1d",color:"#fca5a5"})},"Delete")))):null
   );
