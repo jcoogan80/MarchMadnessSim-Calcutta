@@ -715,15 +715,17 @@ function App(){
     setInjData(null);
     var teamList=teams.map(function(t){return t.name;}).join(", ");
     var prompt="You are a sports injury analyst. Search the web right now for the latest NCAA Tournament 2026 injury news.\n\nFor each of these teams: "+teamList+"\n\nReturn ONLY a JSON array (no markdown, no explanation) with this structure:\n[\n  {\n    \"team\": \"Duke\",\n    \"severity\": \"High\",\n    \"injuries\": [\n      {\"player\": \"Name\", \"status\": \"Out\", \"detail\": \"Brief current status from today's news\"}\n    ]\n  }\n]\n\nSeverity: High = key player Out or multiple Questionable. Medium = one starter Questionable. Low = minor issue. None = no known injuries.\nOnly include teams with actual injury news. Use web search to find the most current information as of today. Return valid JSON only.";
-    fetch("https://api.anthropic.com/v1/messages",{
+    // Use Netlify function in production, fall back to direct API in Claude artifact environment
+    var apiUrl=window.location.hostname==="localhost"||window.location.protocol==="file:"
+      ?"https://api.anthropic.com/v1/messages"
+      :"/.netlify/functions/injuries";
+    var fetchBody=apiUrl.indexOf("netlify")>=0
+      ?JSON.stringify({messages:[{role:"user",content:prompt}]})
+      :JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:"user",content:prompt}]});
+    fetch(apiUrl,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        tools:[{type:"web_search_20250305",name:"web_search"}],
-        messages:[{role:"user",content:prompt}]
-      })
+      body:fetchBody
     })
     .then(function(r){return r.json();})
     .then(function(data){
@@ -1208,7 +1210,7 @@ function App(){
 
   if(!hydrated)return ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},"Loading...");
 
-  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["history","📜 History"],["injuries","🏥 Injuries"],["survivor","🎯 Survivor"]];
+  var tabBar=[["setup","⚙️ Setup"],["live","🏆 Live"+(gamesEntered+ffEntered>0?" ("+(gamesEntered+ffEntered)+")":"")],["results","📊 Win Probs"],["calcutta","💰 Calcutta EV"+(hasBlend?" ✦":"")],["compare","⚖️ Compare"],["history","📜 History"],["injuries","🏥 Injuries"],["survivor","🎯 Survivor"],["guide","📖 Guide"]];
 
   // ── SURVIVOR TAB ──────────────────────────────────────────────────────────
   var SURVIVOR_SLOTS=[
@@ -1553,6 +1555,217 @@ function App(){
     );
   }
 
+  // ── GUIDE TAB ─────────────────────────────────────────────────────────────
+  function GuideTab(){
+    try{
+    var _sec=useState("checklist"),sec=_sec[0],setSec=_sec[1];
+    var sections=[
+      ["checklist","✅ Pre-Tournament Checklist"],
+      ["teams","🏀 Updating Teams & Ratings"],
+      ["bracket","🗂️ Updating the Bracket"],
+      ["adjs","⚡ Adjustments"],
+      ["calcutta","💰 Calcutta EV Tab"],
+      ["compare","⚖️ Compare Tab"],
+      ["live","🏆 Live Tab"],
+      ["survivor","🎯 Survivor Tab"],
+      ["history","📜 History Tab"],
+      ["code","🛠️ Code Update Reference"],
+    ];
+
+    var stH2={fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"10px",borderBottom:"1px solid #1e293b",paddingBottom:"6px"};
+    var stH3={fontSize:"12px",fontWeight:700,color:"#f59e0b",marginBottom:"4px",marginTop:"10px"};
+    var stP={fontSize:"11px",color:"#94a3b8",lineHeight:1.8,marginBottom:"4px"};
+    var stLi={fontSize:"11px",color:"#94a3b8",lineHeight:2,paddingLeft:"14px"};
+    var stWarn={background:"rgba(251,191,36,0.08)",border:"1px solid rgba(251,191,36,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#fbbf24",marginBottom:"6px"};
+    var stGood={background:"rgba(22,101,52,0.12)",border:"1px solid rgba(22,101,52,0.3)",borderRadius:"6px",padding:"8px 10px",fontSize:"10px",color:"#4ade80",marginBottom:"6px"};
+    var stCode={background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",padding:"8px 10px",fontFamily:"monospace",fontSize:"10px",color:"#4ade80",marginBottom:"8px",whiteSpace:"pre-wrap"};
+
+    function renderSection(s){
+      if(s==="checklist")return ce("div",{},
+        ce("div",{style:stH2},"✅ Pre-Tournament Checklist"),
+        ce("div",{style:stWarn},"Do these steps IN ORDER about 1 week before Selection Sunday."),
+        ce("div",{style:stH3},"Step 1 — Update Team Ratings"),
+        ce("div",{style:stLi},"• Go to kenpom.com and barttorvik.com for current ratings"),
+        ce("div",{style:stLi},"• You only need the 64 tournament teams once bracket is announced"),
+        ce("div",{style:stLi},"• Use Setup tab → Paste Ratings to bulk-load (Name, KenPom, Barthag)"),
+        ce("div",{style:stH3},"Step 2 — Update the Bracket (in code)"),
+        ce("div",{style:stLi},"• Open index.html in a text editor"),
+        ce("div",{style:stLi},"• Find DEFAULT_TEAMS — update all 64 teams"),
+        ce("div",{style:stLi},"• Find FIRST_FOUR — update the 4 play-in games"),
+        ce("div",{style:stLi},"• Find JASON_SHEET_ADJ / CLAUDE_ADJ — update your opinion adjustments"),
+        ce("div",{style:stH3},"Step 3 — Add This Year's Calcutta Data"),
+        ce("div",{style:stLi},"• After the auction, paste results into History tab → click Analyze"),
+        ce("div",{style:stH3},"Step 4 — Reset App State"),
+        ce("div",{style:stLi},"• Setup tab → Reset, or create a new Profile for the new year"),
+        ce("div",{style:stH3},"Step 5 — Run First Simulation"),
+        ce("div",{style:stLi},"• Set blend slider (50/50 default), click Run Sim with 10K sims"),
+        ce("div",{style:stLi},"• 1-seeds should show ~85-90% R64 win prob"),
+        ce("div",{style:stGood},"Ready. Use tabs in this order: Live → Win Probs → Calcutta EV → Survivor")
+      );
+      if(s==="teams")return ce("div",{},
+        ce("div",{style:stH2},"🏀 Updating Teams & Ratings"),
+        ce("div",{style:stH3},"Option A — Paste Ratings (easiest)"),
+        ce("div",{style:stP},"Setup tab → Paste Ratings button. Paste 3 columns tab-separated:"),
+        ce("div",{style:stCode},"Duke\t38.90\t0.9813\nFlorida\t33.79\t0.9732\nHouston\t33.43\t0.9709"),
+        ce("div",{style:stWarn},"KenPom = point differential (+5 to +40). Barthag = 0 to 1 scale. Don't mix them up."),
+        ce("div",{style:stH3},"Option B — Edit in the Table"),
+        ce("div",{style:stP},"Click any row in Setup tab to edit ratings/seed/name inline."),
+        ce("div",{style:stH3},"Where to get ratings"),
+        ce("div",{style:stLi},"• KenPom: kenpom.com (subscription ~$20/yr)"),
+        ce("div",{style:stLi},"• BartTorvik: barttorvik.com (free, use T-Rank/Barthag column)"),
+        ce("div",{style:stH3},"Name Matching"),
+        ce("div",{style:stP},"App fuzzy-matches names. Aliases hardcoded: UConn=Connecticut, Ole Miss=Mississippi, etc. Check Unmatched list in status bar if paste misses teams.")
+      );
+      if(s==="bracket")return ce("div",{},
+        ce("div",{style:stH2},"🗂️ Updating the Bracket in Code"),
+        ce("div",{style:stWarn},"Requires editing index.html in a text editor. Make a backup first."),
+        ce("div",{style:stH3},"Finding DEFAULT_TEAMS"),
+        ce("div",{style:stP},"Search for: var DEFAULT_TEAMS=["),
+        ce("div",{style:stCode},"{id:1, name:\"Florida\", seed:1, region:\"South\",\n kenpom:33.79, torvik:0.9732}"),
+        ce("div",{style:stLi},"• id: unique number 1-64, keep sequential"),
+        ce("div",{style:stLi},"• region: exactly \"South\", \"East\", \"West\", or \"Midwest\""),
+        ce("div",{style:stLi},"• kenpom: efficiency margin (higher = better)"),
+        ce("div",{style:stLi},"• torvik: Barthag 0-1 scale (0.97+ = elite)"),
+        ce("div",{style:stH3},"Finding FIRST_FOUR"),
+        ce("div",{style:stP},"Search for: var FIRST_FOUR=["),
+        ce("div",{style:stWarn},"slotId must match the DEFAULT_TEAMS id of the placeholder the winner replaces. Get this wrong and the bracket breaks."),
+        ce("div",{style:stH3},"Bracket Structure"),
+        ce("div",{style:stP},"R64 pods: [1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15]. Seeds auto-matched within each region.")
+      );
+      if(s==="adjs")return ce("div",{},
+        ce("div",{style:stH2},"⚡ Adjustments"),
+        ce("div",{style:stH3},"Three adjustment types"),
+        ce("div",{style:stLi},"• Sheet Adj (yellow): your personal opinion override"),
+        ce("div",{style:stLi},"• PG Adj (purple): second analytics source adjustment"),
+        ce("div",{style:stLi},"• Inj Adj (red): injury impact — always active, not toggled"),
+        ce("div",{style:stP},"Sheet + PG are averaged → Blended Adj. Toggle with ⚡ Adjs ON/OFF button."),
+        ce("div",{style:stH3},"Updating for a new year"),
+        ce("div",{style:stP},"Search for var JASON_SHEET_ADJ= and var CLAUDE_ADJ= in the code:"),
+        ce("div",{style:stCode},"var JASON_SHEET_ADJ={\n  \"Duke\":2.0,\n  \"Houston\":1.5,\n  \"Georgia\":-2.0\n};"),
+        ce("div",{style:stWarn},"Units are point-differential. +2.0 = team is 2pts better than ratings say. Stay conservative — ±3 is a big adjustment.")
+      );
+      if(s==="calcutta")return ce("div",{},
+        ce("div",{style:stH2},"💰 Calcutta EV Tab"),
+        ce("div",{style:stH3},"Setup"),
+        ce("div",{style:stLi},"• Enter pot size in Total Pot field"),
+        ce("div",{style:stLi},"• Enter bid/sale prices in yellow column"),
+        ce("div",{style:stLi},"• Check ✓ for teams YOU own"),
+        ce("div",{style:stH3},"Key columns"),
+        ce("div",{style:stLi},"• Exp Return: sim-based expected payout value"),
+        ce("div",{style:stLi},"• Full EV $: profit/loss vs price paid (checked teams only)"),
+        ce("div",{style:stLi},"• R1 Edge: sim edge vs market spread"),
+        ce("div",{style:stLi},"• Blend %: average of your sim + Compare source B"),
+        ce("div",{style:stLi},"• ML=Calc: moneyline equivalent for underdog R64 value"),
+        ce("div",{style:stH3},"Payouts (hardcoded)"),
+        ce("div",{style:stP},"R64=0.94% · R32=1.5% · S16=2% · E8=3% · F4=4.5% · Champ=7% of pot. Search RPAY to change.")
+      );
+      if(s==="compare")return ce("div",{},
+        ce("div",{style:stH2},"⚖️ Compare Tab"),
+        ce("div",{style:stP},"Compares your sim against another EV source. Blended values flow to Calcutta tab."),
+        ce("div",{style:stH3},"How to use"),
+        ce("div",{style:stLi},"1. Calcutta tab → Export for Compare (or Compare tab → Auto-fill Source A)"),
+        ce("div",{style:stLi},"2. Paste other source into Source B"),
+        ce("div",{style:stLi},"3. Click Compare"),
+        ce("div",{style:stLi},"4. Go back to Calcutta tab — Blend columns now live"),
+        ce("div",{style:stH3},"Agreement tags"),
+        ce("div",{style:stLi},"• Agree < $50 · Close $50-200 · Diff $200-500 · Big Diff $500+"),
+        ce("div",{style:stWarn},"Blend % = average EV / pot. It is a relative pot share, not a win probability.")
+      );
+      if(s==="live")return ce("div",{},
+        ce("div",{style:stH2},"🏆 Live Tab"),
+        ce("div",{style:stH3},"During the tournament"),
+        ce("div",{style:stLi},"• Enter First Four results first"),
+        ce("div",{style:stLi},"• Click Win as games go final — sim re-runs automatically"),
+        ce("div",{style:stLi},"• Eliminated teams grey out in Win Probs tab"),
+        ce("div",{style:stH3},"Spread inputs (Win Probs tab)"),
+        ce("div",{style:stP},"Each alive team shows a spread input for their current game. Negative = team is favored. Entering on one team auto-populates their opponent too."),
+        ce("div",{style:stH3},"Undoing"),
+        ce("div",{style:stP},"Click Undo on any game card. Clear All wipes the full bracket including First Four."),
+        ce("div",{style:stWarn},"Clear All also resets First Four — re-enter those results first.")
+      );
+      if(s==="survivor")return ce("div",{},
+        ce("div",{style:stH2},"🎯 Survivor Tab"),
+        ce("div",{style:stH3},"Pick schedule (10 picks)"),
+        ce("div",{style:stLi},"• R64 Thu: 2 picks (South/East) · R64 Fri: 2 picks (West/Midwest)"),
+        ce("div",{style:stLi},"• R32 Sat: 1 · R32 Sun: 1 · S16 Thu: 1 · S16 Fri: 1"),
+        ce("div",{style:stLi},"• E8 weekend: 2 total · F4: 1 · NCG: 1"),
+        ce("div",{style:stH3},"Four strategies — click a card to activate"),
+        ce("div",{style:stLi},"• Chalk: max probability, backwards from champion"),
+        ce("div",{style:stLi},"• Contrarian: win prob x (1-popularity), avoids crowded picks"),
+        ce("div",{style:stLi},"• Sim Backwards: your sim cumulative probs from champion down"),
+        ce("div",{style:stLi},"• Sim Forward: greedy conditional win prob forward"),
+        ce("div",{style:stH3},"Locking picks"),
+        ce("div",{style:stP},"Click a team row to lock your pick (green check). Optimizer re-optimizes remaining slots instantly. Click again to unlock."),
+        ce("div",{style:stH3},"Parlay Calculator"),
+        ce("div",{style:stP},"Shows fair odds parlay value for your 12-pick plan + book-adjusted estimate (~4.5% vig/leg).")
+      );
+      if(s==="history")return ce("div",{},
+        ce("div",{style:stH2},"📜 History Tab"),
+        ce("div",{style:stP},"2021-2025 Calcutta data pre-loaded (336 records). Permanent, hardcoded."),
+        ce("div",{style:stH3},"Adding a new year (temporary)"),
+        ce("div",{style:stP},"Paste into the text box in this format, then click Analyze:"),
+        ce("div",{style:stCode},"year\tTeam\tRegion\tSeed\tPurchaser\tPrice\n2026\tDuke\tEast\t1\tJawn\t13000"),
+        ce("div",{style:stH3},"Adding permanently (stays next year)"),
+        ce("div",{style:stP},"Add rows to the HIST_RAW string at the top of index.html, following the same tab-separated format."),
+        ce("div",{style:stWarn},"Never change the header row at the top of HIST_RAW — the parser skips line 1.")
+      );
+      if(s==="code")return ce("div",{},
+        ce("div",{style:stH2},"🛠️ Code Update Reference"),
+        ce("div",{style:stH3},"Variables to update every year"),
+        ce("div",{style:{overflowX:"auto"}},ce("table",{},
+          ce("thead",{},ce("tr",{},TH("What"),TH("Search for"),TH("Notes"))),
+          ce("tbody",{},[
+            ["64 bracket teams","var DEFAULT_TEAMS=[","Seed, region, name, ratings for all 64"],
+            ["First Four","var FIRST_FOUR=[","4 play-in games + slotIds"],
+            ["Sheet adjustments","var JASON_SHEET_ADJ=","Your opinion adjustments"],
+            ["PG adjustments","var CLAUDE_ADJ=","Second source adjustments"],
+            ["Historical data","var HIST_RAW=","Paste new auction year here"],
+            ["Payouts","var RPAY=","Only if pool structure changes"],
+            ["Survivor slots","var SURVIVOR_SLOTS=","Only if pick schedule changes"],
+            ["Injury fallback","var INJURY_DATA=","Static data if API fails"],
+          ].map(function(r){return ce("tr",{key:r[0]},
+            TD(ce("span",{style:{fontWeight:600,fontSize:"10px"}},r[0])),
+            TD(ce("span",{style:{fontFamily:"monospace",fontSize:"10px",color:"#4ade80"}},r[1])),
+            TD(ce("span",{style:{fontSize:"10px",color:"#64748b"}},r[2]))
+          );}))
+        )),
+        ce("div",{style:stH3},"Deploy workflow"),
+        ce("div",{style:stLi},"• Edit index.html locally in VS Code"),
+        ce("div",{style:stLi},"• Test by opening file:// in browser"),
+        ce("div",{style:stLi},"• git add index.html → git commit → git push → Netlify auto-deploys"),
+        ce("div",{style:stH3},"Profiles and state"),
+        ce("div",{style:stP},"State saves to localStorage per profile. Create a new profile each year (e.g. Jason 2027) to preserve prior year data."),
+        ce("div",{style:stWarn},"localStorage is browser-specific. Use Export/Import to move state between computers.")
+      );
+      return ce("div",{style:{color:"#475569",padding:"20px"}},"Select a section from the left.");
+    }
+
+    var sections=[
+      ["checklist","✅ Checklist"],["teams","🏀 Ratings"],["bracket","🗂️ Bracket"],
+      ["adjs","⚡ Adjustments"],["calcutta","💰 Calcutta"],["live","🏆 Live"],
+      ["survivor","🎯 Survivor"],["history","📜 History"],["code","🛠️ Code Ref"]
+    ];
+    return ce("div",{style:{padding:"14px"}},
+      ce("div",{style:{background:"#1e293b",borderRadius:"8px",padding:"12px 16px",marginBottom:"14px",border:"1px solid #334155"}},
+        ce("div",{style:{fontSize:"14px",fontWeight:700,color:"#60a5fa",marginBottom:"2px"}},"📖 App Guide & Documentation"),
+        ce("div",{style:{fontSize:"10px",color:"#64748b"}},"Everything you need to set up and use this app each year — start with the checklist")
+      ),
+      ce("div",{style:{display:"flex",gap:"12px",alignItems:"flex-start"}},
+        ce("div",{style:{width:"150px",flexShrink:0,display:"flex",flexDirection:"column",gap:"3px"}},
+          sections.map(function(pair){
+            return ce("button",{key:pair[0],onClick:function(){setSec(pair[0]);},
+              style:{background:sec===pair[0]?"#1e40af":"#1e293b",border:"1px solid "+(sec===pair[0]?"#3b82f6":"#334155"),borderRadius:"6px",padding:"7px 10px",cursor:"pointer",fontSize:"11px",fontWeight:sec===pair[0]?700:400,color:sec===pair[0]?"#fff":"#94a3b8",textAlign:"left"}},
+              pair[1]);
+          })
+        ),
+        ce("div",{style:{flex:1,background:"#111827",borderRadius:"10px",padding:"16px",border:"1px solid #1e293b",minHeight:"400px"}},
+          renderSection(sec)
+        )
+      )
+    );
+    }catch(e){return ce("div",{style:{padding:"20px",color:"#f87171"}},"Guide error: "+e.message);}
+  }
+
   // ── HISTORY TAB ───────────────────────────────────────────────────────────
   function HistTab(){
     var ha=histAnalysis;
@@ -1819,6 +2032,10 @@ function App(){
           injData.teams.map(function(t){var sc=t.severity==="High"?"#f87171":t.severity==="Medium"?"#fb923c":t.severity==="Low"?"#fde68a":"#4ade80";var sb=t.severity==="High"?"rgba(127,29,29,0.2)":t.severity==="Medium"?"rgba(124,45,18,0.2)":t.severity==="Low"?"rgba(113,63,18,0.15)":"rgba(22,101,52,0.1)";return ce("div",{key:t.team,style:{background:"#1e293b",borderRadius:"8px",padding:"12px",border:"1px solid "+(t.severity==="None"?"#1e293b":"#334155")}},ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:t.injuries.length?"8px":"0"}},ce("div",{style:{fontWeight:700,fontSize:"12px"}},t.team),ce("span",{style:{fontSize:"9px",fontWeight:700,color:sc,background:sb,padding:"2px 7px",borderRadius:"10px"}},t.severity==="None"?"✓ Healthy":t.severity)),t.injuries.map(function(inj,i){var ic=inj.status==="Out"?"#f87171":inj.status==="Doubtful"?"#fb923c":inj.status==="Questionable"?"#fde68a":"#94a3b8";return ce("div",{key:i,style:{background:"#0f172a",borderRadius:"5px",padding:"6px 8px",marginTop:"4px"}},ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}},ce("span",{style:{fontWeight:600,fontSize:"11px"}},inj.player),ce("span",{style:{fontSize:"9px",color:ic,fontWeight:700}},inj.status)),ce("div",{style:{fontSize:"10px",color:"#94a3b8"}},inj.detail));}));}))
       ):null
     ):null,
+
+    tab==="history"?ce(HistTab,null):null,
+
+    tab==="guide"?ce(GuideTab,null):null,
 
     // ── MODALS ────────────────────────────────────────────────────────────────
     pmO?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}},ce("div",{style:{background:"#1e293b",borderRadius:"10px",padding:"20px",maxWidth:"520px",width:"90%",border:"1px solid #334155"}},ce("div",{style:{fontWeight:700,fontSize:"14px",marginBottom:"8px"}},"Paste Ratings"),ce("div",{style:{fontSize:"11px",color:"#94a3b8",marginBottom:"12px"}},"Copy name/kenpom/torvik columns from Google Sheet and paste below."),ce("textarea",{value:pt,onChange:function(ev){setPt(ev.target.value);},placeholder:"name\tkenpom\ttorvik",style:{width:"100%",height:"160px",background:"#0f172a",border:"1px solid #334155",borderRadius:"6px",color:"#f1f5f9",padding:"8px",fontSize:"11px",resize:"vertical",fontFamily:"monospace"}}),ce("div",{style:{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"10px"}},ce("button",{onClick:function(){setPmO(false);setPt("");},style:bSt({background:"#334155",color:"#f1f5f9"})},"Cancel"),ce("button",{onClick:applyPaste,disabled:!pt.trim(),style:bSt({background:pt.trim()?"#1d4ed8":"#334155",color:"#fff"})},"Apply")))):null,
